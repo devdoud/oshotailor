@@ -43,6 +43,7 @@ dependencies:
   get_storage: ^2.1.1
   supabase_flutter: ^2.8.3
   shimmer: ^3.0.0
+  flutter_dotenv: ^5.1.0
 
   # Firebase for Messaging (Downgraded to resolve conflicts)
   firebase_core: ^3.10.1
@@ -68,6 +69,7 @@ flutter:
 
   #--------- LOCAL ASSSETS -----------#
   assets:
+    - .env
     - assets/logos/
     - assets/icons/
     - assets/images/on_boarding_images/
