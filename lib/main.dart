@@ -8,7 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'app.dart';
 import 'firebase_options.dart';
-import '../.env.dart';
+import 'env.dart';
 
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp(
@@ -21,6 +21,7 @@ Future<void> main() async {
   final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
 
   await GetStorage.init();
+  await loadEnv();
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 
   try {
