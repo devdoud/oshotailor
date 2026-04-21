@@ -8,6 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'app.dart';
 import 'firebase_options.dart';
+import '../.env.dart';
 
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp(
@@ -36,8 +37,8 @@ Future<void> main() async {
   }
 
   await Supabase.initialize(
-    url: 'https://pzkeklqgogwvnspmivhp.supabase.co',
-    anonKey: 'sb_publishable_kNei4UoU8GgPwr05EXXJXw_yJFzmBAY',
+    url: supabaseUrl,
+    anonKey: supabaseAnonKey,
   );
 
   FlutterNativeSplash.remove();
