@@ -1,0 +1,17 @@
+flutter_native_splash:
+  color: "#181818"
+  color_dark: "#FFFFFF"
+  image: assets/logos/logofinaltailor.png
+  image_dark: assets/logos/logofinaltailor.png
+  
+  android_gravity: center
+
+  android_12:
+    color: "#181818"
+    color_dark: "#FFFFFF"
+    image: assets/logos/logofinaltailor.png
+    image_dark: assets/logos/logofinaltailor.png
+
+    android_gravity: center
+
+  web: false
