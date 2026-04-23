@@ -69,6 +69,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
               _buildStatusBadge(),
               const SizedBox(height: 20),
               _buildInfoCard(context),
+              const SizedBox(height: 20),
+              _buildClientCard(),
               const SizedBox(height: 100),
             ],
           ),
@@ -94,188 +96,50 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       child: Text(text, style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 12)),
     );
   }
+
   Widget _buildInfoCard(BuildContext context) {
     return Container(
-      decoration: BoxDecoration(
-        color: Colors.white, 
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
       child: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                GestureDetector(
-                  onTap: () {
-                    if (widget.order.thumbnailUrl != null) {
-                      Get.dialog(
-                        Dialog(
-                          backgroundColor: Colors.transparent,
-                          insetPadding: const EdgeInsets.all(16),
-                          child: Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              InteractiveViewer(
-                                panEnabled: true,
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(16),
-                                  child: Image.network(widget.order.thumbnailUrl!, fit: BoxFit.contain),
-                                ),
-                              ),
-                              Positioned(
-                                top: 0,
-                                right: 0,
-                                child: IconButton(icon: const Icon(Icons.close, color: Colors.white, size: 30), onPressed: () => Get.back()),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    }
-                  },
-                  child: Container(
-                    width: 70,
-                    height: 70,
-                    decoration: BoxDecoration(
-                      color: OColors.primary.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(16),
-                      image: widget.order.thumbnailUrl != null
-                          ? DecorationImage(
-                              image: NetworkImage(widget.order.thumbnailUrl!),
-                              fit: BoxFit.cover,
-                            )
-                          : null,
-                    ),
-                    child: widget.order.thumbnailUrl == null
-                        ? const Icon(Iconsax.image, color: OColors.primary)
-                        : null,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.order.modelName,
-                        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18, letterSpacing: -0.5),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        "Réf: #${widget.order.id.length > 8 ? widget.order.id.substring(0, 8).toUpperCase() : widget.order.id}",
-                        style: TextStyle(color: Colors.grey[500], fontSize: 12, fontWeight: FontWeight.w600),
-                      ),
-
-                    ],
-                  ),
-                ),
-              ],
+          ListTile(
+            leading: ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: Image.asset(OImages.modelstore, width: 50, height: 50, fit: BoxFit.cover),
             ),
+            title: Text(widget.order.modelName, style: const TextStyle(fontWeight: FontWeight.bold)),
+            subtitle: Text("Montant: ${NumberFormat('#,###').format(widget.order.amount)} F"),
           ),
-          ..._buildOrderItemsSections(),
+          const Divider(),
+          _buildActionTile(Iconsax.image, "Photos de référence", () => Get.to(() => const ModelPhotosScreen())),
         ],
       ),
     );
   }
 
-  List<Widget> _buildOrderItemsSections() {
-    if (widget.order.orderItems == null || widget.order.orderItems!.isEmpty) return [];
-
-    final item = widget.order.orderItems!.first;
-    final config = item['configuration_snapshot'];
-    final customization = item['customization_details'];
-    final measurements = item['measurement_snapshot'];
-
-    List<Widget> sections = [];
-    if (config != null && config is Map) {
-      sections.add(const SizedBox(height: 16));
-      sections.add(_buildJsonSection('Configuration (Tissu, etc.)', Map<String, dynamic>.from(config)));
-    }
-    if (customization != null && customization is Map) {
-      sections.add(const SizedBox(height: 16));
-      sections.add(_buildJsonSection('Personnalisation', Map<String, dynamic>.from(customization)));
-    }
-    if (measurements != null && measurements is Map) {
-      sections.add(const SizedBox(height: 16));
-      sections.add(_buildJsonSection('Mesures Appliquées', Map<String, dynamic>.from(measurements)));
-    }
-    
-    return sections;
-  }
-
-  Widget _buildJsonSection(String title, Map<String, dynamic> data) {
-    if (data.isEmpty) return const SizedBox.shrink();
-    
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16, left: 16, right: 16),
+  Widget _buildClientCard() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Colors.grey[700]),
+          const Text("Informations Client", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          const SizedBox(height: 15),
+          Row(
+            children: [
+              const Icon(Iconsax.user, size: 20, color: Colors.grey),
+              const SizedBox(width: 10),
+              Text(widget.order.customerName),
+            ],
           ),
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF9FAFB),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Column(
-              children: data.entries.map((e) {
-                if (e.value == null || e.value.toString().isEmpty) {
-                  return const SizedBox.shrink();
-                }
-                
-                String displayValue = e.value.toString();
-                if (e.value is Map) {
-                  displayValue = (e.value as Map).entries.map((inner) => '${inner.key}: ${inner.value}').join(',\n');
-                } else if (e.value is List) {
-                  displayValue = (e.value as List).join(', ');
-                }
-                
-                // Formater la clé ("tissu_id" -> "Tissu Id")
-                String displayKey = e.key.replaceAll('_', ' ');
-                if (displayKey.isNotEmpty) {
-                  displayKey = displayKey[0].toUpperCase() + displayKey.substring(1);
-                }
-                
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        flex: 2,
-                        child: Text(
-                          displayKey,
-                          style: TextStyle(color: Colors.grey[500], fontSize: 13, fontWeight: FontWeight.w600),
-                        ),
-                      ),
-                      Expanded(
-                        flex: 3,
-                        child: Text(
-                          displayValue,
-                          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: const Color(0xFF333333)),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }).toList(),
-            ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              const Icon(Iconsax.call, size: 20, color: Colors.grey),
+              const SizedBox(width: 10),
+              Text(widget.order.customerPhone),
+            ],
           ),
         ],
       ),
