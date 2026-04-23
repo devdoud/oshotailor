@@ -5,13 +5,11 @@ import 'package:osho/data/services/fcm_service.dart';
 import 'package:osho/data/services/tailor_orders_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'package:osho/features/tailor_dashboard/models/tailor_order.dart';
-
 class TailorOrdersController extends GetxController {
   static TailorOrdersController get instance => Get.find();
 
   /// Reactive properties
-  final orders = Rx<List<TailorOrder>>([]);
+  final orders = Rx<List<dynamic>>([]);
   final isLoading = false.obs;
   final activeTab = 'pending'.obs;
 
@@ -68,13 +66,8 @@ class TailorOrdersController extends GetxController {
       isLoading.value = true;
       final statusToFetch = status ?? activeTab.value;
 
-      final fetchedOrdersRaw =
+      final fetchedOrders =
           await TailorOrdersService.getMyOrders(status: statusToFetch);
-
-      final List<TailorOrder> fetchedOrders = fetchedOrdersRaw
-          .whereType<Map<String, dynamic>>()
-          .map((json) => TailorOrder.fromJson(json))
-          .toList();
 
       orders.value = fetchedOrders;
       print('✅ Fetched ${fetchedOrders.length} $statusToFetch orders');
