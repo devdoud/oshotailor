@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:iconsax/iconsax.dart';
 import 'package:intl/intl.dart';
 import 'package:osho/common/widgets/loaders/loader.dart';
 import 'package:osho/data/services/assignment_service.dart';
@@ -217,19 +218,29 @@ class _TailorOrderDetailScreenState extends State<TailorOrderDetailScreen> {
           const SizedBox(height: 24),
           Row(
             children: [
-              CircleAvatar(
-                radius: 28,
-                backgroundColor: OColors.primary.withValues(alpha: 0.1),
-                child: Text(
-                  order.clientName.isNotEmpty ? order.clientName[0].toUpperCase() : 'C',
-                  style: const TextStyle(
-                    color: OColors.primary,
-                    fontSize: 24,
-                    fontWeight: FontWeight.w900,
-                  ),
+              // Image du produit au lieu de l'avatar
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  color: OColors.grey1,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: order.thumbnailUrl != null
+                      ? Image.network(order.thumbnailUrl!, fit: BoxFit.cover)
+                      : const Icon(Iconsax.image, color: OColors.primary, size: 30),
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 20),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -238,17 +249,38 @@ class _TailorOrderDetailScreenState extends State<TailorOrderDetailScreen> {
                       order.clientName,
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.w900,
-                            letterSpacing: -0.5,
+                            letterSpacing: -0.8,
+                            fontSize: 22,
                           ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 6),
                     Text(
-                      order.clientPhone.isNotEmpty ? order.clientPhone : 'Pas de contact',
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
+                      _formatAmount(order.amount),
+                      style: const TextStyle(
+                        color: OColors.primary,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 18,
                       ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Icon(Iconsax.calendar_1, size: 14, color: Colors.grey[400]),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            'Reçu le ${_formatDate(order.createdAt)}',
+                            style: TextStyle(
+                              color: Colors.grey[500],
+                              fontWeight: FontWeight.w600,
+                              fontSize: 12,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),

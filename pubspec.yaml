@@ -69,7 +69,6 @@ flutter:
 
   #--------- LOCAL ASSSETS -----------#
   assets:
-    - .env
     - assets/logos/
     - assets/icons/
     - assets/images/on_boarding_images/
@@ -87,4 +86,3 @@ flutter:
           weight: 400
         - asset: assets/fonts/dmsans/medium.ttf
           weight: 500
-

@@ -52,12 +52,37 @@ class UserController extends GetxController {
     }
   }
 
+  /// Mettre à jour les informations du profil
+  Future<void> updateProfile(UserModel updatedUser) async {
+    try {
+      profileLoading.value = true;
+      await userRepository.updateUserDetails(updatedUser);
+      
+      // Mettre à jour l'état local
+      user(updatedUser);
+      
+      OLoaders.successSnackBar(
+          title: 'Félicitations', 
+          message: 'Votre profil a été mis à jour avec succès.');
+          
+      // Rafraîchir les données
+      await fetchUserRecord();
+      
+    } catch (e) {
+      OLoaders.errorSnackBar(
+          title: 'Erreur', 
+          message: 'Une erreur est survenue lors de la mise à jour: $e');
+    } finally {
+      profileLoading.value = false;
+    }
+  }
+
   /// Upload de la photo de profil (Placeholder)
   Future<void> uploadUserProfilePicture() async {
     try {
       OLoaders.successSnackBar(
           title: 'Bientôt disponible',
-          message: 'Cette fonctionnalité sera disponible prochainement.');
+          message: 'L\'upload de photo nécessite le package image_picker.');
     } catch (e) {
       OLoaders.errorSnackBar(
           title: 'Erreur', message: 'Impossible de mettre à jour la photo : $e');

@@ -6,6 +6,8 @@ import 'package:get_storage/get_storage.dart';
 import 'package:osho/data/services/fcm_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'package:intl/date_symbol_data_local.dart';
+
 import 'app.dart';
 import 'firebase_options.dart';
 import 'env.dart';
@@ -22,6 +24,7 @@ Future<void> main() async {
 
   await GetStorage.init();
   await loadEnv();
+  await initializeDateFormatting('fr_FR', null);
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 
   try {
