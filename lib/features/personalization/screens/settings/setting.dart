@@ -3,8 +3,8 @@ import 'package:get/get.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:osho/features/authentication/controllers/login/login_controller.dart';
 import 'package:osho/features/personalization/controllers/user_controller.dart';
+import 'package:osho/features/personalization/screens/profile/profile.dart';
 import 'package:osho/features/personalization/screens/settings/widgets/user_profile.dart';
-import 'package:osho/features/shop/screens/order/order.dart';
 import 'package:osho/utils/constants/colors.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -12,12 +12,11 @@ class SettingsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Ensuring controllers are available
     if (!Get.isRegistered<LoginController>()) Get.put(LoginController());
     if (!Get.isRegistered<UserController>()) Get.put(UserController());
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA), // Soft background
+      backgroundColor: const Color(0xFFF8F9FA),
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -26,10 +25,10 @@ class SettingsScreen extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(24, 60, 24, 40),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: const BorderRadius.vertical(bottom: Radius.circular(32)),
+                borderRadius: const BorderRadius.vertical(bottom: Radius.circular(40)),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.03),
+                    color: Colors.black.withValues(alpha: 0.04),
                     blurRadius: 20,
                     offset: const Offset(0, 10),
                   )
@@ -37,104 +36,137 @@ class SettingsScreen extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                   Row(
+                  Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
+                      const Text(
                         'Profil Atelier',
-                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.black,
+                          letterSpacing: -1,
                         ),
                       ),
                       Container(
-                        padding: const EdgeInsets.all(8),
+                        padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF0F0F0),
-                          borderRadius: BorderRadius.circular(12),
+                          color: OColors.primary.withValues(alpha: 0.05),
+                          borderRadius: BorderRadius.circular(15),
                         ),
-                        child: const Icon(Iconsax.setting_2, color: Colors.black87),
+                        child: const Icon(Iconsax.setting_2, color: OColors.primary, size: 22),
                       )
                     ],
-                   ),
-                   const SizedBox(height: 30),
-                   const OUserProfile(), 
+                  ),
+                  const SizedBox(height: 35),
+                  const OUserProfile(), 
                 ],
               ),
             ),
       
             // --- Menu Sections ---
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+              padding: const EdgeInsets.fromLTRB(20, 25, 20, 100),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildSectionHeader("Atelier"),
+                  _buildSectionHeader("Mon Activité"),
+                  const SizedBox(height: 12),
                   
-                  _buildMenuTile(
-                    icon: Iconsax.user, 
-                    title: "Informations de l'Atelier", 
-                    subtitle: "Modifier votre profil professionnel",
-                    onTap: () {
-                      Get.snackbar("Info", "La modification du profil sera disponible prochainement.");
-                    }
-                  ),
-                  _buildMenuTile(
-                    icon: Iconsax.box, 
-                    title: "Gestion des Commandes",
-                    subtitle: "Historique et suivi des travaux", 
-                    onTap: () => Get.to(() => const OrderScreen())
-                  ),
+                  _buildMenuCard([
+                    _buildMenuTile(
+                      icon: Iconsax.user_edit, 
+                      title: "Détails du Profil", 
+                      subtitle: "Nom, email, téléphone",
+                      onTap: () => Get.to(() => const ProfileScreen())
+                    ),
+                    _buildDivider(),
+                    _buildMenuTile(
+                      icon: Iconsax.status_up, 
+                      title: "Statistiques & Revenus",
+                      subtitle: "Performance de l'atelier", 
+                      onTap: () => Get.snackbar("Bientôt", "Cette section est en cours de développement.")
+                    ),
+                    _buildDivider(),
+                    _buildMenuTile(
+                      icon: Iconsax.shop_add, 
+                      title: "Mes Services",
+                      subtitle: "Gérer vos types de couture", 
+                      onTap: () => Get.snackbar("Services", "Fonctionnalité disponible bientôt.")
+                    ),
+                  ]),
 
-                  const SizedBox(height: 24),
-                  _buildSectionHeader("Paramètres"),
+                  const SizedBox(height: 30),
+                  _buildSectionHeader("Service"),
+                  const SizedBox(height: 12),
 
-                  _buildMenuTile(
-                    icon: Iconsax.notification, 
-                    title: "Notifications", 
-                    subtitle: "Alertes de nouvelles commandes",
-                    onTap: () {} 
-                  ),
-                  _buildMenuTile(
-                    icon: Iconsax.shield_security, 
-                    title: "Confidentialité", 
-                    subtitle: "Gestion des données",
-                    onTap: () {} 
-                  ),
+                  _buildMenuCard([
+                    _buildMenuTile(
+                      icon: Iconsax.notification_bing, 
+                      title: "Notifications", 
+                      subtitle: "Préférences d'alertes",
+                      onTap: () => Get.snackbar("Paramètres", "Configuration des notifications.")
+                    ),
+                    _buildDivider(),
+                    _buildMenuTile(
+                      icon: Iconsax.message_question, 
+                      title: "Aide & Support", 
+                      subtitle: "Centre d'assistance Osho",
+                      onTap: () {} 
+                    ),
+                    _buildDivider(),
+                    _buildMenuTile(
+                      icon: Iconsax.info_circle, 
+                      title: "À propos", 
+                      subtitle: "Version de l'application",
+                      onTap: () {} 
+                    ),
+                  ]),
                   
                   const SizedBox(height: 40),
                   
                   // Logout Button
-                  SizedBox(
-                    width: double.infinity,
-                    child: TextButton(
-                      onPressed: () => LoginController.instance.logout(),
-                      style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        backgroundColor: Colors.red.withOpacity(0.05),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  InkWell(
+                    onTap: () => LoginController.instance.logout(),
+                    borderRadius: BorderRadius.circular(20),
+                    child: Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.red.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(20),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Iconsax.logout, color: Colors.red, size: 20),
-                          const SizedBox(width: 8),
-                          Text(
-                            "Se déconnecter", 
-                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          const Icon(Iconsax.logout, color: Colors.red, size: 22),
+                          const SizedBox(width: 12),
+                          const Text(
+                            "Déconnexion du compte", 
+                            style: TextStyle(
                               color: Colors.red, 
-                              fontWeight: FontWeight.w600
+                              fontWeight: FontWeight.w800,
+                              fontSize: 15,
                             )
                           ),
                         ],
                       ),
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  
+                  const SizedBox(height: 30),
                   Center(
-                    child: Text(
-                      "OSHO TAILOR v1.0.0",
-                      style: Theme.of(context).textTheme.labelMedium?.copyWith(color: Colors.grey),
+                    child: Column(
+                      children: [
+                        const Text(
+                          "OSHO TAILOR PREVIEW",
+                          style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 2),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          "v1.0.4 • Made with love",
+                          style: TextStyle(color: Colors.grey.withValues(alpha: 0.5), fontSize: 10),
+                        ),
+                      ],
                     ),
                   )
                 ],
@@ -148,58 +180,72 @@ class SettingsScreen extends StatelessWidget {
 
   Widget _buildSectionHeader(String title) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12, top: 8),
+      padding: const EdgeInsets.only(left: 4),
       child: Text(
         title.toUpperCase(),
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.bold,
-          color: Colors.grey[400],
-          letterSpacing: 1.2,
+        style: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w900,
+          color: OColors.grey2,
+          letterSpacing: 1.5,
         ),
       ),
+    );
+  }
+
+  Widget _buildMenuCard(List<Widget> children) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          )
+        ],
+      ),
+      child: Column(children: children),
+    );
+  }
+
+  Widget _buildDivider() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Divider(height: 1, color: Colors.grey.withValues(alpha: 0.1)),
     );
   }
 
   Widget _buildMenuTile({
     required IconData icon,
     required String title,
-    String? subtitle,
+    required String subtitle,
     VoidCallback? onTap,
   }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.015),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          )
-        ],
-      ),
+    return Material(
+      color: Colors.transparent,
       child: ListTile(
         onTap: onTap,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
         leading: Container(
-          padding: const EdgeInsets.all(8),
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: OColors.primary.withOpacity(0.06),
-            shape: BoxShape.circle,
+            color: OColors.primary.withValues(alpha: 0.06),
+            borderRadius: BorderRadius.circular(15),
           ),
-          child: Icon(icon, color: OColors.primary, size: 20),
+          child: Icon(icon, color: OColors.primary, size: 22),
         ),
         title: Text(
           title, 
-          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: Colors.black87)
+          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: Colors.black87)
         ),
-        subtitle: subtitle != null ? Text(
+        subtitle: Text(
           subtitle,
-          style: TextStyle(color: Colors.grey[400], fontSize: 12)
-        ) : null,
-        trailing: Icon(Iconsax.arrow_right_3, size: 16, color: Colors.grey[300]),
+          style: TextStyle(color: Colors.grey[500], fontSize: 12, fontWeight: FontWeight.w500)
+        ),
+        trailing: Icon(Iconsax.arrow_right_3, size: 18, color: Colors.grey[300]),
       ),
     );
   }

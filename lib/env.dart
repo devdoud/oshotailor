@@ -1,16 +1,11 @@
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+// Configuration des variables d'environnement
+// Note : Dans un projet en production, ces valeurs devraient être gérées via --dart-define ou un fichier sécurisé.
+
+const String supabaseUrl = 'https://pzkeklqgogwvnspmivhp.supabase.co';
+const String supabaseAnonKey = 'sb_publishable_kNei4UoU8GgPwr05EXXJXw_yJFzmBAY';
 
 Future<void> loadEnv() async {
-  await dotenv.load(fileName: '.env');
-}
-
-String get supabaseUrl => _requireEnv('SUPABASE_URL');
-String get supabaseAnonKey => _requireEnv('SUPABASE_ANON_KEY');
-
-String _requireEnv(String key) {
-  final value = dotenv.env[key];
-  if (value == null || value.isEmpty) {
-    throw Exception('Missing environment variable: $key');
-  }
-  return value;
+  // Cette fonction est conservée pour ne pas casser main.dart, 
+  // mais elle n'a plus besoin de charger de fichier .env
+  return;
 }

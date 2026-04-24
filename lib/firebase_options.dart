@@ -27,10 +27,7 @@ class DefaultFirebaseOptions {
       case TargetPlatform.macOS:
         return macos;
       case TargetPlatform.windows:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for windows - '
-          'you can reconfigure this by running the "flutterfire configure" command.',
-        );
+        return windows;
       case TargetPlatform.linux:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for linux - '
@@ -55,12 +52,11 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'YOUR_ANDROID_API_KEY',
-    appId: 'YOUR_ANDROID_APP_ID',
-    messagingSenderId: 'YOUR_MESSAGING_SENDER_ID',
-    projectId: 'YOUR_PROJECT_ID',
-    databaseURL: 'YOUR_DATABASE_URL',
-    storageBucket: 'YOUR_STORAGE_BUCKET',
+    apiKey: 'AIzaSyDSPNl2YRM6k8mVgMdpCKPa9HyyMPka6uk',
+    appId: '1:404140150220:android:8fb67543d610b0cc36a169',
+    messagingSenderId: '404140150220',
+    projectId: 'oshotailor-db96f',
+    storageBucket: 'oshotailor-db96f.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
@@ -82,4 +78,15 @@ class DefaultFirebaseOptions {
     storageBucket: 'YOUR_STORAGE_BUCKET',
     iosBundleId: 'com.example.osho',
   );
+
+  static const FirebaseOptions windows = FirebaseOptions(
+    apiKey: 'AIzaSyD0Rj2rdQiyFsT1l4JXYowRX0cMnq8nKjw',
+    appId: '1:404140150220:web:4b9c4dcfb0fcf2fe36a169',
+    messagingSenderId: '404140150220',
+    projectId: 'oshotailor-db96f',
+    authDomain: 'oshotailor-db96f.firebaseapp.com',
+    storageBucket: 'oshotailor-db96f.firebasestorage.app',
+    measurementId: 'G-NX66Q86BG9',
+  );
+
 }

@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:osho/features/personalization/controllers/user_controller.dart';
 import 'package:osho/utils/constants/image_strings.dart';
 import 'package:osho/common/widgets/images/o_circular_image.dart';
+import 'package:osho/features/personalization/screens/profile/profile.dart';
 import 'package:osho/utils/constants/colors.dart';
 
 class OUserProfile extends StatelessWidget {
@@ -22,10 +23,7 @@ class OUserProfile extends StatelessWidget {
           final image = networkImage.isNotEmpty ? networkImage : OImages.profile;
           
           return InkWell(
-            onTap: () {
-                // ProfileScreen removed for now as it was causing an error
-                Get.snackbar("Info", "La modification du profil sera disponible prochainement.");
-            },
+            onTap: () => Get.to(() => const ProfileScreen()),
             child: Container(
               padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
@@ -57,8 +55,8 @@ class OUserProfile extends StatelessWidget {
           return Column(
             children: [
               Text(
-                hasName ? user.fullName : "Bienvenue Atelier",
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.black87),
+                hasName ? user.fullName : "Atelier Osho",
+                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 20, color: Colors.black, letterSpacing: -0.5),
               ),
               const SizedBox(height: 4),
               Text(
