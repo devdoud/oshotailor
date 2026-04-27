@@ -50,8 +50,10 @@ class AuthenticationRepository extends GetxController {
         password: password,
         data: metadata,
       );
+    } on AuthException catch (e) {
+      throw e.message;
     } catch (e) {
-      throw e.toString();
+      throw 'Une erreur inattendue est survenue lors de l\'inscription.';
     }
   }
 
@@ -65,17 +67,23 @@ class AuthenticationRepository extends GetxController {
         unawaited(FCMService.registerTailorToken(response.user!.id));
       }
       return response;
+    } on AuthException catch (e) {
+      // Affichera précisément "Email not confirmed" ou "Invalid login credentials"
+      throw e.message; 
     } catch (e) {
-      throw e.toString();
+      throw 'Erreur de connexion : Vérifiez votre connexion internet.';
     }
   }
 
   Future<void> logout() async {
     try {
+      print("DEBUG: Entame de la déconnexion Supabase...");
       await _supabase.auth.signOut();
-      Get.offAll(() => const LoginScreen());
+      print("DEBUG: Session Supabase détruite avec succès.");
     } catch (e) {
-      throw 'Une erreur est survenue lors de la deconnexion.';
+      print("DEBUG: Erreur lors du signOut (souvent réseau) : $e");
+    } finally {
+      Get.offAll(() => const LoginScreen());
     }
   }
 }
