@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:osho/bindings/general_bindings.dart';
 import 'package:osho/common/widgets/loaders/loader.dart';
@@ -20,6 +21,12 @@ class App extends StatelessWidget {
       translations: AppTranslations(), // Add translations
       locale: Get.deviceLocale, // Get device locale
       fallbackLocale: const Locale('en', 'US'), // Fallback to English
+      // Même style de barres système sur tous les écrans, y compris ceux
+      // sans AppBar : la couleur du papier remonte sous la barre de statut.
+      builder: (context, child) => AnnotatedRegion<SystemUiOverlayStyle>(
+        value: OshoTheme.systemOverlay(Theme.of(context).brightness),
+        child: child!,
+      ),
       /// Show Loader or Circular Progress Indicator meanwhile Authentication Repository is deciding to show relevant screen
       // home: OnBoardingScreen(),
       // home: AutoPoseCaptureView(),

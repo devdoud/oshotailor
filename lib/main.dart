@@ -2,6 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:osho/data/services/fcm_service.dart';
@@ -28,6 +29,10 @@ Future<void> main() async {
   }
 
   final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+
+  // Bord à bord : les écrans passent sous les barres système, qui restent
+  // transparentes (style défini dans OshoTheme.systemOverlay).
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
   await GetStorage.init();
   await loadEnv();

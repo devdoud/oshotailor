@@ -21,6 +21,25 @@ class OshoTheme {
   static ThemeData lightTheme = _build(OshoTokens.light, Brightness.light);
   static ThemeData darkTheme = _build(OshoTokens.dark, Brightness.dark);
 
+  /// Barres système transparentes : le papier de l'écran passe dessous
+  /// (affichage bord à bord), icônes lisibles dans les deux thèmes.
+  static SystemUiOverlayStyle systemOverlay(Brightness brightness) {
+    final light = brightness == Brightness.light;
+    final t = light ? OshoTokens.light : OshoTokens.dark;
+    final iconBrightness = light ? Brightness.dark : Brightness.light;
+    return SystemUiOverlayStyle(
+      statusBarColor: t.bg.withValues(alpha: 0),
+      statusBarIconBrightness: iconBrightness,
+      // iOS : décrit le fond, pas les icônes.
+      statusBarBrightness: brightness,
+      systemNavigationBarColor: t.bg.withValues(alpha: 0),
+      systemNavigationBarDividerColor: t.bg.withValues(alpha: 0),
+      systemNavigationBarIconBrightness: iconBrightness,
+      systemNavigationBarContrastEnforced: false,
+      systemStatusBarContrastEnforced: false,
+    );
+  }
+
   static ThemeData _build(OshoTokens t, Brightness brightness) {
     final scheme = ColorScheme(
       brightness: brightness,
@@ -116,9 +135,7 @@ class OshoTheme {
         actionsIconTheme: IconThemeData(color: t.ink, size: 22),
         titleTextStyle: OType.display(20, t.ink, weight: FontWeight.w600),
         shape: Border(bottom: BorderSide(color: t.hairline)),
-        systemOverlayStyle: brightness == Brightness.light
-            ? SystemUiOverlayStyle.dark
-            : SystemUiOverlayStyle.light,
+        systemOverlayStyle: systemOverlay(brightness),
       ),
       dividerTheme: DividerThemeData(color: t.hairline, thickness: 1, space: 1),
       elevatedButtonTheme: ElevatedButtonThemeData(
