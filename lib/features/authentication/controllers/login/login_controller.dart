@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:osho/common/widgets/loaders/loader.dart';
 import 'package:osho/data/repositories/authentication/authentication_repository.dart';
-import 'package:osho/utils/constants/image_strings.dart';
 import 'package:osho/utils/helpers/network_manager.dart';
 import '../../../../utils/popups/full_screen_loader.dart';
 
@@ -35,8 +34,7 @@ class LoginController extends GetxController {
   Future<void> emailAndPasswordSignIn() async {
     try {
       // Start Loading
-      OFullScreenLoader.openLoadingDialog(
-          'Connexion en cours...', OImages.docerAnimation);
+      OFullScreenLoader.openLoadingDialog('Connexion en cours...');
 
       // Check Internet Connectivity
       final isConnected = await NetworkManager.instance.isConnected();

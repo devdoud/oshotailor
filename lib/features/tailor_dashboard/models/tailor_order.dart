@@ -73,13 +73,9 @@ class TailorOrder {
     // Extraire les infos depuis order_items s'il existe
     final orderItemsData = sourceForDetails['order_items'];
     List<Map<String, dynamic>> parsedItems = [];
-    Map<String, dynamic> firstItem = {};
-    
+
     if (orderItemsData is List && orderItemsData.isNotEmpty) {
       parsedItems = orderItemsData.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
-      if (parsedItems.isNotEmpty) {
-        firstItem = parsedItems.first;
-      }
     }
     
     // Extraction de la vignette/photo du produit (thumbnail) et du nom du modèle

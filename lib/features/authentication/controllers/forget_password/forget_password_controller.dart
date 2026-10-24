@@ -5,7 +5,6 @@ import 'package:osho/utils/helpers/network_manager.dart';
 import 'package:osho/utils/popups/full_screen_loader.dart';
 
 import '../../../../common/widgets/loaders/loader.dart';
-import '../../../../utils/constants/image_strings.dart';
 
 class ForgetPasswordController extends GetxController {
   static ForgetPasswordController get instance => Get.find();
@@ -18,8 +17,7 @@ class ForgetPasswordController extends GetxController {
   sendPasswordResetEmail() async {
     try {
       // Start Loading
-      OFullScreenLoader.openLoadingDialog(
-          'processing your information...', OImages.docerAnimation);
+      OFullScreenLoader.openLoadingDialog('processing your information...');
 
       // Check the internet Connectivity
       final isConnected = await NetworkManager.instance.isConnected();
@@ -54,8 +52,7 @@ class ForgetPasswordController extends GetxController {
   resendPasswordResetEmail(String email) async {
     try {
       // Start Loading
-      OFullScreenLoader.openLoadingDialog(
-          'processing your information...', OImages.docerAnimation);
+      OFullScreenLoader.openLoadingDialog('processing your information...');
 
       // Check the internet Connectivity
       final isConnected = await NetworkManager.instance.isConnected();

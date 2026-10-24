@@ -4,15 +4,8 @@ import 'package:osho/common/widgets/loaders/loader.dart';
 import 'package:osho/utils/theme/osho_tokens.dart';
 
 class OFullScreenLoader {
-  /// Open a full-screen loading dialog with a given text and animation.
-  /// This method doesn't return anything.
-  /// 
-  /// Parameters 
-  ///  - text: The textto be displyed in the loading dialog
-  ///  - animation: The Lottie animation to be shown
-  /// 
-  
-  static void openLoadingDialog(String text, String animation) {
+  /// Open a full-screen loading dialog with the given text.
+  static void openLoadingDialog(String text) {
     Get.dialog(
       PopScope(
         canPop: false, // Disable Popping with the back button
