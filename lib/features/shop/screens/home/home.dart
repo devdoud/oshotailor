@@ -7,7 +7,7 @@ import 'package:osho/common/widgets/loaders/loader.dart';
 import 'package:osho/features/shop/controllers/home_controller.dart';
 import 'package:osho/features/shop/models/order_model.dart';
 import 'package:osho/features/shop/screens/order/order.dart';
-import 'package:osho/features/shop/screens/order/order_detail.dart';
+import 'package:osho/features/tailor_dashboard/screens/tailor_order_detail_screen.dart';
 import 'package:osho/navigation_menu.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -157,7 +157,7 @@ class _RecentOrderRow extends StatelessWidget {
 
     return MergeSemantics(
       child: InkWell(
-        onTap: () => Get.to(() => OrderDetailScreen(order: order)),
+        onTap: () => Get.to(() => TailorOrderDetailScreen(orderId: order.id)),
         child: Container(
           constraints: const BoxConstraints(minHeight: 72),
           padding: const EdgeInsets.symmetric(vertical: 12),

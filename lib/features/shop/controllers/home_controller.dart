@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:osho/data/services/tailor_orders_service.dart';
@@ -57,7 +58,7 @@ class HomeController extends GetxController {
       recentOrders.assignAll(allOrders.take(5).toList());
 
     } catch (e) {
-      print("Error fetching dashboard: $e");
+      debugPrint("Error fetching dashboard: $e");
     } finally {
       isLoading.value = false;
     }

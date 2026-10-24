@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class TailorOrdersService {
@@ -48,10 +49,10 @@ class TailorOrdersService {
         }
       }
 
-      print('⚠️ Unexpected edge function response: ${response.data}');
+      debugPrint('⚠️ Unexpected edge function response type: ${response.data.runtimeType}');
       return [];
     } catch (e) {
-      print('❌ Error fetching tailor orders: $e');
+      debugPrint('❌ Error fetching tailor orders: $e');
       rethrow;
     }
   }
@@ -106,7 +107,7 @@ class TailorOrdersService {
 
       throw Exception('Order not found for id $orderId');
     } catch (e) {
-      print('❌ Error fetching tailor order by id: $e');
+      debugPrint('❌ Error fetching tailor order by id: $e');
       rethrow;
     }
   }

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'dart:async';
 
 import 'package:flutter_native_splash/flutter_native_splash.dart';
@@ -77,11 +78,11 @@ class AuthenticationRepository extends GetxController {
 
   Future<void> logout() async {
     try {
-      print("DEBUG: Entame de la déconnexion Supabase...");
+      debugPrint("DEBUG: Entame de la déconnexion Supabase...");
       await _supabase.auth.signOut();
-      print("DEBUG: Session Supabase détruite avec succès.");
+      debugPrint("DEBUG: Session Supabase détruite avec succès.");
     } catch (e) {
-      print("DEBUG: Erreur lors du signOut (souvent réseau) : $e");
+      debugPrint("DEBUG: Erreur lors du signOut (souvent réseau) : $e");
     } finally {
       Get.offAll(() => const LoginScreen());
     }

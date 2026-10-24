@@ -59,6 +59,8 @@ class UserModel {
   }
 
   /// Convert UserModel to JSON (Matches public.profiles table in Supabase)
+  ///
+  /// `role` is never sent: it is a privilege, set server-side only.
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -67,7 +69,16 @@ class UserModel {
       'username': username,
       'phone': phone,
       'avatar_url': profilePicture,
-      'role': role,
+    };
+  }
+
+  /// Only the fields a user may edit on their own profile.
+  /// `id`, `email` and `role` stay out of any update payload.
+  Map<String, dynamic> toProfileUpdateJson() {
+    return {
+      'full_name': '$firstName $lastName'.trim(),
+      'phone': phone,
+      'avatar_url': profilePicture,
     };
   }
 

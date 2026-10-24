@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AssignmentService {
@@ -48,9 +49,9 @@ class AssignmentService {
         },
       );
 
-      print('✅ Assignment status updated to: $newStatus');
+      debugPrint('✅ Assignment status updated to: $newStatus');
     } catch (e) {
-      print('❌ Error updating assignment status: $e');
+      debugPrint('❌ Error updating assignment status: $e');
       rethrow;
     }
   }

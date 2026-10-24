@@ -50,3 +50,15 @@ android/app/google-services.json
 ios/Runner/GoogleService-Info.plist
 lib/env.dart
 lib/firebase_options.dart
+.env.dart
+# Toute variante de fichier d'environnement, sauf le modèle
+.env*
+!.env.example
+**/env.dart
+# Clés de signature et comptes de service
+*.jks
+*.keystore
+*.p12
+*.pem
+key.properties
+**/service-account*.json

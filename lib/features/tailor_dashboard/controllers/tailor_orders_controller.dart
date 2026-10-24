@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:osho/common/widgets/loaders/loader.dart';
 import 'package:osho/data/services/assignment_service.dart';
@@ -48,16 +49,16 @@ class TailorOrdersController extends GetxController {
 
         // Register tailor token
         await FCMService.registerTailorToken(userId);
-        print('✅ FCM token registered');
+        debugPrint('✅ FCM token registered');
 
         // Listen to notifications
         FCMService.listenToNotifications(() {
-          print('📬 Notification received, refreshing orders...');
+          debugPrint('📬 Notification received, refreshing orders...');
           fetchOrders();
         });
       }
     } catch (e) {
-      print('⚠️ FCM initialization warning: $e');
+      debugPrint('⚠️ FCM initialization warning: $e');
     }
   }
 
@@ -74,9 +75,9 @@ class TailorOrdersController extends GetxController {
           .map((e) => TailorOrder.fromJson(Map<String, dynamic>.from(e)))
           .toList());
           
-      print('✅ Fetched ${orders.length} $statusToFetch orders');
+      debugPrint('✅ Fetched ${orders.length} $statusToFetch orders');
     } catch (e) {
-      print('❌ Error fetching orders: $e');
+      debugPrint('❌ Error fetching orders: $e');
       OLoaders.errorSnackBar(
         title: 'Erreur',
         message: 'Impossible de charger les commandes',
@@ -100,7 +101,7 @@ class TailorOrdersController extends GetxController {
       // Refresh the list
       await fetchOrders();
     } catch (e) {
-      print('❌ Error accepting order: $e');
+      debugPrint('❌ Error accepting order: $e');
       OLoaders.errorSnackBar(
         title: 'Erreur',
         message: 'Impossible d\'accepter la commande',
@@ -124,7 +125,7 @@ class TailorOrdersController extends GetxController {
       // Refresh the list
       await fetchOrders();
     } catch (e) {
-      print('❌ Error starting order: $e');
+      debugPrint('❌ Error starting order: $e');
       OLoaders.errorSnackBar(
         title: 'Erreur',
         message: 'Impossible de démarrer la commande',
@@ -148,7 +149,7 @@ class TailorOrdersController extends GetxController {
       // Refresh the list
       await fetchOrders();
     } catch (e) {
-      print('❌ Error completing order: $e');
+      debugPrint('❌ Error completing order: $e');
       OLoaders.errorSnackBar(
         title: 'Erreur',
         message: 'Impossible de terminer la commande',
@@ -172,7 +173,7 @@ class TailorOrdersController extends GetxController {
       // Refresh the list
       await fetchOrders();
     } catch (e) {
-      print('❌ Error rejecting order: $e');
+      debugPrint('❌ Error rejecting order: $e');
       OLoaders.errorSnackBar(
         title: 'Erreur',
         message: 'Impossible de rejeter la commande',

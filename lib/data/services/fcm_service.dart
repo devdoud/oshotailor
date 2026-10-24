@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -24,7 +25,7 @@ class FCMService {
         onConflict: 'tailor_id',
       );
     } catch (e) {
-      print('❌ Error registering FCM token: $e');
+      debugPrint('❌ Error registering FCM token: $e');
       rethrow;
     }
   }
@@ -49,14 +50,14 @@ class FCMService {
       final data = message.data;
 
       if (data['type'] == 'new_order') {
-        print('📬 New order notification received');
+        debugPrint('📬 New order notification received');
         onNewOrder();
       } else if (data['type'] == 'order_update') {
-        print('🔄 Order update notification received');
+        debugPrint('🔄 Order update notification received');
         onNewOrder();
       }
     } catch (e) {
-      print('❌ Error handling notification: $e');
+      debugPrint('❌ Error handling notification: $e');
     }
   }
 
@@ -65,7 +66,7 @@ class FCMService {
     try {
       return await _firebaseMessaging.getToken();
     } catch (e) {
-      print('❌ Error getting FCM token: $e');
+      debugPrint('❌ Error getting FCM token: $e');
       return null;
     }
   }
@@ -75,7 +76,7 @@ class FCMService {
     try {
       return await _firebaseMessaging.requestPermission();
     } catch (e) {
-      print('❌ Error requesting notification permissions: $e');
+      debugPrint('❌ Error requesting notification permissions: $e');
       rethrow;
     }
   }

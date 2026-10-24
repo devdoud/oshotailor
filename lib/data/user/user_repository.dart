@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -27,10 +28,10 @@ class UserRepository extends GetxController {
           'tailor_id': user.id,
           'fcm_token': token,
         });
-        print("✅ FCM Token saved successfully");
+        debugPrint("✅ FCM Token saved successfully");
       }
     } catch (e) {
-      print("❌ Error saving FCM token: $e");
+      debugPrint("❌ Error saving FCM token: $e");
     }
   }
 
@@ -57,28 +58,40 @@ class UserRepository extends GetxController {
 
       return UserModel.fromJson(response);
     } catch (e) {
-      print('DEBUG: Error fetching user details: $e');
+      debugPrint('DEBUG: Error fetching user details: $e');
       throw 'Erreur lors de la récupération des informations utilisateur.';
     }
   }
 
   /// Function to update user data in Supabase
+  /// Always targets the signed-in user's own row, with editable fields only.
   Future<void> updateUserDetails(UserModel updatedUser) async {
     try {
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) throw 'Utilisateur non connecté.';
+
       await _supabase
           .from('users')
-          .update(updatedUser.toJson())
-          .eq('id', updatedUser.id);
+          .update(updatedUser.toProfileUpdateJson())
+          .eq('id', userId);
     } catch (e) {
       throw 'Erreur lors de la mise à jour des informations : $e';
     }
   }
 
-  /// Update any specific field in the users table
+  static const _editableFields = {'full_name', 'phone', 'avatar_url'};
+
+  /// Update a user-editable field in the users table.
+  /// Privileged columns (role, email, id) are rejected.
   Future<void> updateSingleField(Map<String, dynamic> json) async {
     try {
       final userId = _supabase.auth.currentUser?.id;
       if (userId == null) throw 'Utilisateur non connecté.';
+
+      final forbidden = json.keys.where((k) => !_editableFields.contains(k));
+      if (forbidden.isNotEmpty) {
+        throw 'Champ non modifiable : ${forbidden.join(', ')}';
+      }
 
       await _supabase
           .from('users')

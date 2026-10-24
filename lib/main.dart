@@ -1,5 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:get_storage/get_storage.dart';
@@ -20,6 +21,12 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 }
 
 Future<void> main() async {
+  // No logs in release builds: they end up in logcat and may carry
+  // customer data or backend error details.
+  if (kReleaseMode) {
+    debugPrint = (String? message, {int? wrapWidth}) {};
+  }
+
   final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
 
   await GetStorage.init();
