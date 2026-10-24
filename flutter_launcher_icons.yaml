@@ -1,0 +1,24 @@
+# Icône de l'app tailleur : la marque en version sombre (anneau papier,
+# repère garance) sur le noir chaud, pour se distinguer de l'app cliente.
+flutter_launcher_icons:
+  image_path: assets/icon/app_icon.png
+  android: ic_launcher
+  min_sdk_android: 21
+  adaptive_icon_background: "#14130F"
+  adaptive_icon_foreground: assets/icon/app_icon_foreground.png
+  adaptive_icon_monochrome: assets/icon/app_icon_monochrome.png
+  ios: true
+  remove_alpha_ios: true
+  background_color_ios: "#14130F"
+  web:
+    generate: true
+    image_path: assets/icon/app_icon.png
+    background_color: "#14130F"
+    theme_color: "#14130F"
+  windows:
+    generate: true
+    image_path: assets/icon/app_icon.png
+    icon_size: 256
+  macos:
+    generate: true
+    image_path: assets/icon/app_icon.png

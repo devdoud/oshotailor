@@ -1,17 +1,18 @@
+# Écran de démarrage « Atelier » : la marque seule, au centre, sur le papier.
+# Images générées depuis OshoMark (géométrie exacte), couleurs = jetons bg.
 flutter_native_splash:
-  color: "#181818"
-  color_dark: "#FFFFFF"
-  image: assets/logos/logofinaltailor.png
-  image_dark: assets/logos/logofinaltailor.png
-  
+  color: "#F7F3EA"
+  color_dark: "#14130F"
+  image: assets/splash/splash_light.png
+  image_dark: assets/splash/splash_dark.png
+
   android_gravity: center
+  ios_content_mode: center
 
   android_12:
-    color: "#181818"
-    color_dark: "#FFFFFF"
-    image: assets/logos/logofinaltailor.png
-    image_dark: assets/logos/logofinaltailor.png
-
-    android_gravity: center
+    color: "#F7F3EA"
+    color_dark: "#14130F"
+    image: assets/splash/splash_android12_light.png
+    image_dark: assets/splash/splash_android12_dark.png
 
   web: false
