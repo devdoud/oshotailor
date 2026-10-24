@@ -330,6 +330,42 @@ class OMenuRow extends StatelessWidget {
   }
 }
 
+/// Une action dans une liste de choix (feuille du bas) : libellé seul,
+/// 56 px de haut, filet dessous. `color` pour une action destructrice.
+class OMenuRowAction extends StatelessWidget {
+  const OMenuRowAction({
+    super.key,
+    required this.label,
+    required this.onTap,
+    this.color,
+  });
+
+  final String label;
+  final VoidCallback onTap;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.osho;
+    return Semantics(
+      button: true,
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          constraints: const BoxConstraints(minHeight: 56),
+          alignment: Alignment.centerLeft,
+          decoration: BoxDecoration(
+            border: Border(bottom: BorderSide(color: t.hairline)),
+          ),
+          child: Text(label,
+              style: OType.text(OType.body, color ?? t.ink,
+                  weight: FontWeight.w500)),
+        ),
+      ),
+    );
+  }
+}
+
 /// Message d'état vide ou d'erreur : du texte, pas d'illustration.
 class OEmptyState extends StatelessWidget {
   const OEmptyState(this.message, {super.key, this.action});

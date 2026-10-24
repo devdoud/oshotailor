@@ -1,13 +1,15 @@
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:osho/common/widgets/loaders/loader.dart';
 import 'package:osho/data/user/user_repository.dart';
 import 'package:osho/features/personalization/models/user_model.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 class UserController extends GetxController {
   static UserController get instance => Get.find();
 
   final profileLoading = false.obs;
+  final photoUploading = false.obs;
   Rx<UserModel> user = UserModel.empty().obs;
   final userRepository = Get.put(UserRepository());
 
@@ -21,8 +23,7 @@ class UserController extends GetxController {
   Future<void> fetchUserRecord() async {
     try {
       profileLoading.value = true;
-      final userRecord = await userRepository.fetchUserDetails();
-      user(userRecord);
+      user(await userRepository.fetchUserDetails());
     } catch (e) {
       user(UserModel.empty());
     } finally {
@@ -30,62 +31,70 @@ class UserController extends GetxController {
     }
   }
 
-  /// Sauvegarder ou mettre à jour le profil après authentification
-  Future<void> saveUserRecord(AuthResponse? response) async {
+  /// Enregistre le profil modifié. Le profil affiché ne change qu'une fois
+  /// l'enregistrement réussi. Renvoie un message d'erreur, ou `null`.
+  Future<String?> saveProfile(UserModel updated) async {
     try {
-      if (response != null && response.user != null) {
-        final supabaseUser = response.user!;
-
-        // Créer le modèle à partir des données Supabase
-        final userModel = UserModel.fromSupabaseUser(supabaseUser);
-
-        // Mettre à jour dans la table profiles (Public)
-        await userRepository.updateUserDetails(userModel);
-
-        // Mettre à jour l'état local
-        user(userModel);
-      }
+      await userRepository.updateUserDetails(updated);
+      user(updated);
+      OLoaders.successSnackBar(title: 'Profil enregistré.');
+      return null;
     } catch (e) {
-      OLoaders.warningSnackBar(
-          title: 'Données non synchronisées',
-          message: 'Une erreur est survenue lors de la mise à jour de votre profil.');
+      return e is String ? e : 'Enregistrement impossible.';
     }
   }
 
-  /// Mettre à jour les informations du profil
-  Future<void> updateProfile(UserModel updatedUser) async {
+  /// Choisit une photo (appareil photo ou galerie), l'envoie, puis
+  /// l'enregistre sur le profil.
+  Future<void> changePhoto(ImageSource source) async {
+    final XFile? picked;
     try {
-      profileLoading.value = true;
-      await userRepository.updateUserDetails(updatedUser);
-      
-      // Mettre à jour l'état local
-      user(updatedUser);
-      
-      OLoaders.successSnackBar(
-          title: 'Félicitations', 
-          message: 'Votre profil a été mis à jour avec succès.');
-          
-      // Rafraîchir les données
-      await fetchUserRecord();
-      
+      picked = await ImagePicker().pickImage(
+        source: source,
+        maxWidth: 800,
+        maxHeight: 800,
+        imageQuality: 85,
+        preferredCameraDevice: CameraDevice.front,
+      );
+    } catch (e) {
+      debugPrint('Image picker failed: $e');
+      OLoaders.errorSnackBar(
+          title: source == ImageSource.camera
+              ? 'Appareil photo inaccessible.'
+              : 'Galerie inaccessible.');
+      return;
+    }
+    if (picked == null) return; // Annulé par l'utilisateur.
+
+    photoUploading.value = true;
+    try {
+      final bytes = await picked.readAsBytes();
+      final ext = picked.name.contains('.')
+          ? picked.name.split('.').last
+          : 'jpg';
+      final url = await userRepository.uploadAvatar(bytes, extension: ext);
+      await userRepository.updateSingleField({'avatar_url': url});
+      user(user.value.copyWith(profilePicture: url));
+      OLoaders.successSnackBar(title: 'Photo mise à jour.');
     } catch (e) {
       OLoaders.errorSnackBar(
-          title: 'Erreur', 
-          message: 'Une erreur est survenue lors de la mise à jour: $e');
+          title: e is String ? e : 'Envoi de la photo impossible.');
     } finally {
-      profileLoading.value = false;
+      photoUploading.value = false;
     }
   }
 
-  /// Upload de la photo de profil (Placeholder)
-  Future<void> uploadUserProfilePicture() async {
+  /// Retire la photo du profil (le fichier reste dans le stockage).
+  Future<void> removePhoto() async {
+    photoUploading.value = true;
     try {
-      OLoaders.successSnackBar(
-          title: 'Bientôt disponible',
-          message: 'L\'upload de photo nécessite le package image_picker.');
+      await userRepository.updateSingleField({'avatar_url': ''});
+      user(user.value.copyWith(profilePicture: ''));
+      OLoaders.successSnackBar(title: 'Photo retirée.');
     } catch (e) {
-      OLoaders.errorSnackBar(
-          title: 'Erreur', message: 'Impossible de mettre à jour la photo : $e');
+      OLoaders.errorSnackBar(title: e is String ? e : 'Action impossible.');
+    } finally {
+      photoUploading.value = false;
     }
   }
 }

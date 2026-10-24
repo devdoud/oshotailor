@@ -35,6 +35,7 @@ dependencies:
 
   # UI
   flutter_svg: ^2.3.0
+  image_picker: ^1.2.4
 
 dev_dependencies:
   flutter_test:
@@ -57,7 +58,6 @@ flutter:
   #--------- LOCAL ASSSETS -----------#
   assets:
     - assets/images/on_boarding_images/
-    - assets/images/store/
 
   #-------- LOCAL FONTS -------------#
   fonts:

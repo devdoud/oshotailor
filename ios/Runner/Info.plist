@@ -51,5 +51,9 @@
 		</array>
 		<key>UIStatusBarHidden</key>
 		<false/>
-	</dict>
+		<key>NSCameraUsageDescription</key>
+	<string>Pour prendre la photo de profil de votre atelier.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Pour choisir la photo de profil de votre atelier.</string>
+</dict>
 </plist>

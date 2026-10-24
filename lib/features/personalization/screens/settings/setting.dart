@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:osho/common/widgets/atelier/atelier.dart';
 import 'package:osho/common/widgets/loaders/loader.dart';
 import 'package:osho/features/authentication/controllers/login/login_controller.dart';
 import 'package:osho/features/personalization/controllers/user_controller.dart';
-import 'package:osho/utils/constants/image_strings.dart';
+import 'package:osho/utils/validators/validation.dart';
 
 /// Onglet Profil : tout le compte sur un seul écran, sans niveau
 /// intermédiaire. Chaque ligne modifiable s'ouvre dans une feuille du bas.
@@ -36,15 +37,16 @@ class SettingsScreen extends StatelessWidget {
             Obx(() {
               final user = controller.user.value;
               final photo = user.profilePicture;
-              final hasName =
-                  user.firstName.isNotEmpty || user.lastName.isNotEmpty;
+              final hasName = user.fullName.trim().isNotEmpty;
+              final uploading = controller.photoUploading.value;
               return Row(
                 children: [
-                  OThumb(
-                    url: photo.isNotEmpty ? photo : OImages.profile,
-                    asset: photo.isEmpty,
-                    size: 72,
-                    semanticLabel: 'Photo de profil',
+                  _Avatar(
+                    url: photo,
+                    uploading: uploading,
+                    onTap: uploading
+                        ? null
+                        : () => _photoOptions(context, controller),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -73,11 +75,17 @@ class SettingsScreen extends StatelessWidget {
                               Align(
                                 alignment: Alignment.centerLeft,
                                 child: TextButton(
-                                  onPressed:
-                                      controller.uploadUserProfilePicture,
+                                  onPressed: uploading
+                                      ? null
+                                      : () =>
+                                          _photoOptions(context, controller),
                                   style: TextButton.styleFrom(
                                       padding: EdgeInsets.zero),
-                                  child: const Text('Changer la photo'),
+                                  child: Text(uploading
+                                      ? 'Envoi de la photo…'
+                                      : photo.isEmpty
+                                          ? 'Ajouter une photo'
+                                          : 'Changer la photo'),
                                 ),
                               ),
                             ],
@@ -92,14 +100,15 @@ class SettingsScreen extends StatelessWidget {
             const OSectionLabel('Atelier'),
             const SizedBox(height: 4),
             const OHairline(),
-            Obx(() => OSpecRow(
-                  label: 'Nom',
-                  value: controller.user.value.fullName.trim().isEmpty
-                      ? 'Ajouter'
-                      : controller.user.value.fullName.trim(),
-                  tapHint: 'Modifier le nom',
-                  onTap: () => _editName(context, controller),
-                )),
+            Obx(() {
+              final name = controller.user.value.fullName.trim();
+              return OSpecRow(
+                label: 'Nom',
+                value: name.isEmpty ? 'Ajouter' : name,
+                tapHint: 'Modifier le nom',
+                onTap: () => _editName(context, controller),
+              );
+            }),
             Obx(() {
               final phone = controller.user.value.phone;
               return OSpecRow(
@@ -129,19 +138,14 @@ class SettingsScreen extends StatelessWidget {
                 tapHint: "Copier l'identifiant",
                 onTap: () {
                   Clipboard.setData(ClipboardData(text: id));
-                  OLoaders.infoSnackBar(title: 'Identifiant copié');
+                  OLoaders.infoSnackBar(title: 'Identifiant copié.');
                 },
               );
             }),
-            Obx(() {
-              final role = controller.user.value.role.trim();
-              return OSpecRow(
-                label: 'Rôle',
-                value: role.isEmpty
-                    ? role
-                    : role[0].toUpperCase() + role.substring(1).toLowerCase(),
-              );
-            }),
+            Obx(() => OSpecRow(
+                  label: 'Rôle',
+                  value: _roleLabel(controller.user.value.role),
+                )),
             const SizedBox(height: 32),
 
             OutlinedButton(
@@ -150,7 +154,7 @@ class SettingsScreen extends StatelessWidget {
                   context,
                   title: 'Se déconnecter ?',
                   message:
-                      'Vous ne recevrez plus les nouvelles commandes sur cet appareil tant que vous ne vous reconnectez pas.',
+                      'Vous ne recevrez plus les commandes sur cet appareil.',
                   confirmLabel: 'Se déconnecter',
                 );
                 if (ok) LoginController.instance.logout();
@@ -171,17 +175,231 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  Future<void> _sheet(BuildContext context,
-      {required String title, required List<Widget> children}) {
+  static String _roleLabel(String role) => switch (role.trim().toLowerCase()) {
+        'tailor' => 'Tailleur',
+        'customer' => 'Client',
+        'admin' => 'Administrateur',
+        '' => '',
+        final other => other[0].toUpperCase() + other.substring(1),
+      };
+
+  void _photoOptions(BuildContext context, UserController controller) {
+    final t = context.osho;
+    final hasPhoto = controller.user.value.profilePicture.isNotEmpty;
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (ctx) {
+        Widget option(String label, VoidCallback onTap, {Color? color}) =>
+            OMenuRowAction(label: label, color: color, onTap: () {
+              Navigator.of(ctx).pop();
+              onTap();
+            });
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(kGutter, 12, kGutter, 8),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const OSectionLabel('Photo de profil'),
+                const SizedBox(height: 4),
+                const OHairline(),
+                option('Prendre une photo',
+                    () => controller.changePhoto(ImageSource.camera)),
+                option('Choisir dans la galerie',
+                    () => controller.changePhoto(ImageSource.gallery)),
+                if (hasPhoto)
+                  option('Retirer la photo', controller.removePhoto,
+                      color: t.dangerInk),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _editName(BuildContext context, UserController controller) {
+    _EditFieldSheet.show(
+      context,
+      title: "Nom de l'atelier",
+      label: "Nom de l'atelier",
+      initial: controller.user.value.fullName.trim(),
+      validator: OValidator.validateWorkshopName,
+      capitalization: TextCapitalization.words,
+      autofillHints: const [AutofillHints.organizationName],
+      onSave: (v) => controller
+          .saveProfile(controller.user.value.copyWith(fullName: v)),
+    );
+  }
+
+  void _editPhone(BuildContext context, UserController controller) {
+    _EditFieldSheet.show(
+      context,
+      title: 'Téléphone',
+      label: 'Numéro de téléphone',
+      helper: 'Indicatif compris, par exemple +229 01 23 45 67',
+      initial: controller.user.value.phone,
+      validator: OValidator.validatePhoneNumber,
+      keyboardType: TextInputType.phone,
+      autofillHints: const [AutofillHints.telephoneNumber],
+      onSave: (v) =>
+          controller.saveProfile(controller.user.value.copyWith(phone: v)),
+    );
+  }
+
+  Future<void> _deleteAccount(BuildContext context) async {
+    final ok = await confirmAction(
+      context,
+      title: 'Supprimer le compte ?',
+      message: "Action irréversible : les données de l'atelier seront perdues.",
+      confirmLabel: 'Supprimer',
+      destructive: true,
+    );
+    if (!ok) return;
+    OLoaders.infoSnackBar(
+      title: 'Contactez le support pour supprimer votre compte.',
+    );
+  }
+}
+
+/// Photo de profil carrée, avec indicateur pendant l'envoi.
+class _Avatar extends StatelessWidget {
+  const _Avatar({required this.url, required this.uploading, this.onTap});
+
+  final String url;
+  final bool uploading;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.osho;
+    return Semantics(
+      button: onTap != null,
+      label: 'Photo de profil',
+      hint: onTap != null ? 'Modifier la photo' : null,
+      excludeSemantics: true,
+      child: InkWell(
+        onTap: onTap,
+        child: Stack(
+          children: [
+            // Sans photo : l'emplacement vide, jamais un visage d'exemple.
+            OThumb(url: url.isEmpty ? null : url, size: 72),
+            if (uploading)
+              Positioned.fill(
+                child: ColoredBox(
+                  color: t.bg.withValues(alpha: 0.7),
+                  child: const OLoader(size: 24),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Feuille de modification d'un champ : validation, état d'enregistrement,
+/// erreur affichée sur place. Ne se ferme qu'une fois l'enregistrement réussi.
+class _EditFieldSheet extends StatefulWidget {
+  const _EditFieldSheet({
+    required this.title,
+    required this.label,
+    required this.initial,
+    required this.validator,
+    required this.onSave,
+    this.helper,
+    this.keyboardType,
+    this.capitalization = TextCapitalization.none,
+    this.autofillHints,
+  });
+
+  final String title;
+  final String label;
+  final String? helper;
+  final String initial;
+  final String? Function(String?) validator;
+
+  /// Renvoie un message d'erreur, ou `null` si l'enregistrement a réussi.
+  final Future<String?> Function(String value) onSave;
+  final TextInputType? keyboardType;
+  final TextCapitalization capitalization;
+  final List<String>? autofillHints;
+
+  static Future<void> show(
+    BuildContext context, {
+    required String title,
+    required String label,
+    required String initial,
+    required String? Function(String?) validator,
+    required Future<String?> Function(String value) onSave,
+    String? helper,
+    TextInputType? keyboardType,
+    TextCapitalization capitalization = TextCapitalization.none,
+    List<String>? autofillHints,
+  }) {
     return showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      builder: (ctx) => Padding(
-        padding:
-            EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(kGutter, 20, kGutter, 16),
+      builder: (_) => _EditFieldSheet(
+        title: title,
+        label: label,
+        helper: helper,
+        initial: initial,
+        validator: validator,
+        onSave: onSave,
+        keyboardType: keyboardType,
+        capitalization: capitalization,
+        autofillHints: autofillHints,
+      ),
+    );
+  }
+
+  @override
+  State<_EditFieldSheet> createState() => _EditFieldSheetState();
+}
+
+class _EditFieldSheetState extends State<_EditFieldSheet> {
+  final _formKey = GlobalKey<FormState>();
+  late final _controller = TextEditingController(text: widget.initial);
+  bool _saving = false;
+  bool _changed = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() {
+      _saving = true;
+      _error = null;
+    });
+    final error = await widget.onSave(_controller.text.trim());
+    if (!mounted) return;
+    if (error == null) {
+      Navigator.of(context).pop();
+    } else {
+      setState(() {
+        _saving = false;
+        _error = error;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.osho;
+    return Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(kGutter, 20, kGutter, 16),
+          child: Form(
+            key: _formKey,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -189,97 +407,65 @@ class SettingsScreen extends StatelessWidget {
                 Row(
                   children: [
                     Expanded(
-                      child: Text(title,
-                          style: Theme.of(ctx).textTheme.titleLarge),
+                      child: Text(widget.title,
+                          style: Theme.of(context).textTheme.titleLarge),
                     ),
                     OIconButton(
                       icon: OIcons.close,
                       tooltip: 'Fermer',
-                      onPressed: () => Navigator.of(ctx).pop(),
+                      onPressed:
+                          _saving ? null : () => Navigator.of(context).pop(),
                     ),
                   ],
                 ),
                 const SizedBox(height: 16),
-                ...children,
+                TextFormField(
+                  controller: _controller,
+                  autofocus: true,
+                  enabled: !_saving,
+                  keyboardType: widget.keyboardType,
+                  textCapitalization: widget.capitalization,
+                  autofillHints: widget.autofillHints,
+                  textInputAction: TextInputAction.done,
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
+                  validator: widget.validator,
+                  onChanged: (v) => setState(
+                      () => _changed = v.trim() != widget.initial.trim()),
+                  onFieldSubmitted: (_) {
+                    if (_changed && !_saving) _submit();
+                  },
+                  decoration: InputDecoration(
+                    labelText: widget.label,
+                    helperText: widget.helper,
+                  ),
+                ),
+                if (_error != null) ...[
+                  const SizedBox(height: 12),
+                  Semantics(
+                    liveRegion: true,
+                    child: Text(_error!,
+                        style: OType.text(OType.secondary, t.dangerInk,
+                            weight: FontWeight.w500)),
+                  ),
+                ],
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: _changed && !_saving ? _submit : null,
+                  child: _saving
+                      ? SizedBox.square(
+                          dimension: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: t.muted,
+                          ),
+                        )
+                      : const Text('Enregistrer'),
+                ),
               ],
             ),
           ),
         ),
       ),
-    );
-  }
-
-  void _editName(BuildContext context, UserController controller) {
-    final first = TextEditingController(text: controller.user.value.firstName);
-    final last = TextEditingController(text: controller.user.value.lastName);
-
-    _sheet(context, title: "Nom de l'atelier", children: [
-      TextField(
-        controller: first,
-        autofocus: true,
-        textCapitalization: TextCapitalization.words,
-        textInputAction: TextInputAction.next,
-        decoration: const InputDecoration(labelText: 'Prénom'),
-      ),
-      const SizedBox(height: 12),
-      TextField(
-        controller: last,
-        textCapitalization: TextCapitalization.words,
-        decoration:
-            const InputDecoration(labelText: "Nom ou nom de l'atelier"),
-      ),
-      const SizedBox(height: 20),
-      ElevatedButton(
-        onPressed: () {
-          final user = controller.user.value;
-          user.firstName = first.text.trim();
-          user.lastName = last.text.trim();
-          controller.updateProfile(user);
-          Navigator.of(context).pop();
-        },
-        child: const Text('Enregistrer'),
-      ),
-    ]);
-  }
-
-  void _editPhone(BuildContext context, UserController controller) {
-    final phone = TextEditingController(text: controller.user.value.phone);
-
-    _sheet(context, title: 'Téléphone', children: [
-      TextField(
-        controller: phone,
-        autofocus: true,
-        keyboardType: TextInputType.phone,
-        autofillHints: const [AutofillHints.telephoneNumber],
-        decoration: const InputDecoration(labelText: 'Numéro de téléphone'),
-      ),
-      const SizedBox(height: 20),
-      ElevatedButton(
-        onPressed: () {
-          final user = controller.user.value;
-          user.phone = phone.text.trim();
-          controller.updateProfile(user);
-          Navigator.of(context).pop();
-        },
-        child: const Text('Enregistrer'),
-      ),
-    ]);
-  }
-
-  Future<void> _deleteAccount(BuildContext context) async {
-    final ok = await confirmAction(
-      context,
-      title: 'Supprimer le compte ?',
-      message:
-          "Cette action est irréversible. Toutes les données de l'atelier seront perdues.",
-      confirmLabel: 'Supprimer',
-      destructive: true,
-    );
-    if (!ok) return;
-    OLoaders.infoSnackBar(
-      title: 'Action requise',
-      message:
-          'Pour des raisons de sécurité, contactez le support pour supprimer définitivement votre compte atelier.',
     );
   }
 }

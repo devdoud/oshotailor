@@ -1,70 +1,53 @@
-
+/// Validateurs de formulaires. Messages courts, en français.
 class OValidator {
+  OValidator._();
 
   static String? validateEmptyText(String? fieldName, String? value) {
-    if(value == null || value.isEmpty) {
-      return '$fieldName is required.';
-    }
-
+    if (value == null || value.trim().isEmpty) return '$fieldName requis.';
     return null;
   }
 
   static String? validateEmail(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Email is required';
+    final v = value?.trim() ?? '';
+    if (v.isEmpty) return 'E-mail requis.';
+    if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]{2,}$').hasMatch(v)) {
+      return 'E-mail invalide.';
     }
-
-    // Regular expression for email validation
-    final emailRegExp = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
-
-    if(!emailRegExp.hasMatch(value)) {
-      return 'Invalid email address.';
-    }
-
-    return null ;
-  }
-
-  static String? validatePassword(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Email is required';
-    }
-
-    // Check for minimum password length
-    if(value.length < 6) {
-      return 'Password must be at least 6 charater long.';
-    }
-
-    // Check for uppercase letters
-    if (!value.contains(RegExp(r'[A-Z]'))) {
-      return 'Password must contain at least one uppercase letter.';
-    }
-
-    // Check for numbers
-    if(!value.contains(RegExp(r'[0-9]'))) {
-      return 'Password must contain at least one number';
-    }
-
-    // Check for special caracters
-    if(!value.contains(RegExp(r'[!@#$&*(),.?":{}|<>]'))) {
-      return 'Password must contain at least one special character';
-    }
-
-    return null ;
-  }
-
-  static String? validatePhoneNumber(String? value) {
-    if( value == null || value.isEmpty ) {
-      return 'Phone Number is required';
-    }
-
-    // Regular Expression for phone number validation (assuming a 10 digit US phone number format)
-    final phoneRegExp = RegExp(r'^\d{10}$');
-
-    if (!phoneRegExp.hasMatch(value)) {
-      return 'Invalid phone number format (10 digits required)';
-    }
-
     return null;
   }
 
+  /// Connexion : le mot de passe existant est seulement requis. Les règles
+  /// de robustesse ne s'appliquent qu'à la création d'un mot de passe.
+  static String? validateLoginPassword(String? value) {
+    if (value == null || value.isEmpty) return 'Mot de passe requis.';
+    return null;
+  }
+
+  /// Nouveau mot de passe.
+  static String? validatePassword(String? value) {
+    if (value == null || value.isEmpty) return 'Mot de passe requis.';
+    if (value.length < 8) return '8 caractères minimum.';
+    if (!value.contains(RegExp(r'[A-Z]'))) return 'Une majuscule requise.';
+    if (!value.contains(RegExp(r'[0-9]'))) return 'Un chiffre requis.';
+    return null;
+  }
+
+  static String? validateWorkshopName(String? value) {
+    final v = value?.trim() ?? '';
+    if (v.isEmpty) return 'Nom requis.';
+    if (v.length < 2) return 'Nom trop court.';
+    if (v.length > 60) return '60 caractères maximum.';
+    return null;
+  }
+
+  /// Téléphone international, facultatif : `+`, chiffres, espaces, tirets,
+  /// points et parenthèses ; 8 à 15 chiffres.
+  static String? validatePhoneNumber(String? value, {bool required = false}) {
+    final v = value?.trim() ?? '';
+    if (v.isEmpty) return required ? 'Téléphone requis.' : null;
+    if (!RegExp(r'^\+?[\d\s().-]+$').hasMatch(v)) return 'Numéro invalide.';
+    final digits = v.replaceAll(RegExp(r'\D'), '').length;
+    if (digits < 8 || digits > 15) return 'Numéro invalide.';
+    return null;
+  }
 }

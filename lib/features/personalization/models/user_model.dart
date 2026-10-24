@@ -27,6 +27,27 @@ class UserModel {
   /// Helper function to get the full name
   String get fullName => '$firstName $lastName';
 
+  /// A modified copy: the displayed profile stays untouched until the
+  /// update is saved. `fullName` is split like the `full_name` column.
+  UserModel copyWith({String? fullName, String? phone, String? profilePicture}) {
+    var first = firstName, last = lastName;
+    if (fullName != null) {
+      final parts = fullName.trim().split(RegExp(r'\s+'));
+      first = parts.first;
+      last = parts.length > 1 ? parts.sublist(1).join(' ') : '';
+    }
+    return UserModel(
+      id: id,
+      email: email,
+      firstName: first,
+      lastName: last,
+      username: username,
+      phone: phone ?? this.phone,
+      profilePicture: profilePicture ?? this.profilePicture,
+      role: role,
+    );
+  }
+
   /// Helper function to format phone Number
   String get formattedPhoneNo => OFormatter.formatPhoneNumber(phone);
 

@@ -3,53 +3,44 @@ import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:osho/features/personalization/models/user_model.dart';
 
-/// Repository class for user-related data operations using Supabase.
+/// Profile data of the signed-in tailor (Supabase table `users`, bucket
+/// `avatars`). Errors are thrown as short French messages, ready to show.
 class UserRepository extends GetxController {
   static UserRepository get instance => Get.find();
 
   final _supabase = Supabase.instance.client;
 
-  /// Function to save user record to Supabase "users" table.
-  Future<void> saveUserRecord(UserModel user) async {
-    try {
-      await _supabase.from('users').upsert(user.toJson());
-    } catch (e) {
-      throw 'Erreur lors de l\'enregistrement des informations : $e';
-    }
+  /// Bucket for profile photos, one file per user: `<user id>/avatar.<ext>`.
+  static const avatarBucket = 'avatars';
+
+  String get _userId {
+    final id = _supabase.auth.currentUser?.id;
+    if (id == null) throw 'Session expirée. Reconnectez-vous.';
+    return id;
   }
 
-  /// Function to fetch user details based on the current logged-in user ID.
+  /// Fetch the signed-in user's profile.
   Future<UserModel> fetchUserDetails() async {
     try {
-      final userId = _supabase.auth.currentUser?.id;
-      if (userId == null) throw 'Utilisateur non connecté.';
-
-      final response = await _supabase
-          .from('users')
-          .select()
-          .eq('id', userId)
-          .single();
-
+      final response =
+          await _supabase.from('users').select().eq('id', _userId).single();
       return UserModel.fromJson(response);
     } catch (e) {
-      debugPrint('DEBUG: Error fetching user details: $e');
-      throw 'Erreur lors de la récupération des informations utilisateur.';
+      debugPrint('Error fetching user details: $e');
+      throw 'Profil indisponible.';
     }
   }
 
-  /// Function to update user data in Supabase
-  /// Always targets the signed-in user's own row, with editable fields only.
+  /// Save the editable fields of the signed-in user's own profile.
   Future<void> updateUserDetails(UserModel updatedUser) async {
     try {
-      final userId = _supabase.auth.currentUser?.id;
-      if (userId == null) throw 'Utilisateur non connecté.';
-
       await _supabase
           .from('users')
           .update(updatedUser.toProfileUpdateJson())
-          .eq('id', userId);
+          .eq('id', _userId);
     } catch (e) {
-      throw 'Erreur lors de la mise à jour des informations : $e';
+      debugPrint('Error updating user details: $e');
+      throw 'Enregistrement impossible.';
     }
   }
 
@@ -58,30 +49,44 @@ class UserRepository extends GetxController {
   /// Update a user-editable field in the users table.
   /// Privileged columns (role, email, id) are rejected.
   Future<void> updateSingleField(Map<String, dynamic> json) async {
+    final forbidden = json.keys.where((k) => !_editableFields.contains(k));
+    if (forbidden.isNotEmpty) {
+      throw 'Champ non modifiable : ${forbidden.join(', ')}';
+    }
     try {
-      final userId = _supabase.auth.currentUser?.id;
-      if (userId == null) throw 'Utilisateur non connecté.';
-
-      final forbidden = json.keys.where((k) => !_editableFields.contains(k));
-      if (forbidden.isNotEmpty) {
-        throw 'Champ non modifiable : ${forbidden.join(', ')}';
-      }
-
-      await _supabase
-          .from('users')
-          .update(json)
-          .eq('id', userId);
+      await _supabase.from('users').update(json).eq('id', _userId);
     } catch (e) {
-      throw 'Erreur lors de la mise à jour du champ : $e';
+      debugPrint('Error updating field: $e');
+      throw 'Enregistrement impossible.';
     }
   }
 
-  /// Function to remove user data from Supabase
-  Future<void> removeUserRecord(String userId) async {
+  /// Upload a profile photo and return its public URL. The URL carries a
+  /// version so that the new photo replaces the cached one right away.
+  Future<String> uploadAvatar(Uint8List bytes, {required String extension}) async {
+    final ext = extension.toLowerCase().replaceAll('.', '');
+    final path = '$_userId/avatar.$ext';
     try {
-      await _supabase.from('users').delete().eq('id', userId);
+      final storage = _supabase.storage.from(avatarBucket);
+      await storage.uploadBinary(
+        path,
+        bytes,
+        fileOptions: FileOptions(
+          upsert: true,
+          contentType: ext == 'png' ? 'image/png' : 'image/jpeg',
+        ),
+      );
+      final url = storage.getPublicUrl(path);
+      return '$url?v=${DateTime.now().millisecondsSinceEpoch}';
+    } on StorageException catch (e) {
+      debugPrint('Avatar upload failed: ${e.statusCode} ${e.message}');
+      if (e.message.toLowerCase().contains('bucket')) {
+        throw 'Stockage des photos non configuré.';
+      }
+      throw 'Envoi de la photo impossible.';
     } catch (e) {
-      throw 'Erreur lors de la suppression du compte : $e';
+      debugPrint('Avatar upload failed: $e');
+      throw 'Envoi de la photo impossible.';
     }
   }
 }

@@ -8,7 +8,4 @@ class OImages {
       "assets/images/on_boarding_images/accept.png";
   static const String onBoardingDeliver =
       "assets/images/on_boarding_images/deliver.png";
-
-  // -- Profile Screen
-  static const String profile = "assets/images/store/profile.png";
 }
