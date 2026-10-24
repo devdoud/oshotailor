@@ -61,10 +61,7 @@ class _TailorOrderDetailScreenState extends State<TailorOrderDetailScreen> {
     } catch (e) {
       debugPrint('Error loading order: $e');
       if (mounted) {
-        OLoaders.errorSnackBar(
-          title: 'Erreur',
-          message: 'Impossible de charger les détails de la commande.',
-        );
+        OLoaders.errorSnackBar(title: 'Commande indisponible.');
       }
     } finally {
       if (mounted) {
@@ -85,7 +82,7 @@ class _TailorOrderDetailScreenState extends State<TailorOrderDetailScreen> {
 
     try {
       await action();
-      OLoaders.successSnackBar(title: 'Succès', message: successMessage);
+      OLoaders.successSnackBar(title: successMessage);
 
       if (Get.isRegistered<TailorOrdersController>()) {
         await Get.find<TailorOrdersController>().fetchOrders();
@@ -97,10 +94,8 @@ class _TailorOrderDetailScreenState extends State<TailorOrderDetailScreen> {
 
       await _loadOrder();
     } catch (e) {
-      OLoaders.errorSnackBar(
-        title: 'Erreur',
-        message: 'La mise à jour a échoué : $e',
-      );
+      debugPrint('Assignment update failed: $e');
+      OLoaders.errorSnackBar(title: 'Action impossible. Réessayez.');
     } finally {
       if (mounted) {
         setState(() {
@@ -243,7 +238,7 @@ class _TailorOrderDetailScreenState extends State<TailorOrderDetailScreen> {
               : () => _updateAssignment(
                     action: () =>
                         AssignmentService.startOrder(order.assignmentId),
-                    successMessage: 'Commande démarrée.',
+                    successMessage: 'Confection démarrée.',
                   ),
           child: const Text('Commencer'),
         ),

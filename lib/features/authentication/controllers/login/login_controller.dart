@@ -40,6 +40,7 @@ class LoginController extends GetxController {
       final isConnected = await NetworkManager.instance.isConnected();
       if (!isConnected) {
         OFullScreenLoader.stopLoading();
+        OLoaders.warningSnackBar(title: 'Pas de connexion internet.');
         return;
       }
 
@@ -57,26 +58,20 @@ class LoginController extends GetxController {
       }
 
       // Login user using Supabase
+      // The password is sent as typed: spaces are part of it.
       await AuthenticationRepository.instance
-          .loginWithSupabase(email.text.trim(), password.text.trim());
+          .loginWithSupabase(email.text.trim(), password.text);
 
       // Remove Loader
       OFullScreenLoader.stopLoading();
 
-      // Show Success Message
-      OLoaders.successSnackBar(
-          title: 'Connexion réussie', message: 'Ravi de vous revoir !');
-
-      // Small delay for UX
-      await Future.delayed(const Duration(milliseconds: 500));
-
-      // Redirect User
+      // Redirect User: reaching the dashboard is the confirmation.
       AuthenticationRepository.instance.screenRedirect();
     } catch (e) {
       // Remove Loader
       OFullScreenLoader.stopLoading();
-      // Show Error Snackbar
-      OLoaders.errorSnackBar(title: 'Erreur de connexion', message: e.toString());
+      OLoaders.errorSnackBar(
+          title: e is String ? e : 'Connexion impossible.');
     }
   }
 
@@ -85,7 +80,7 @@ class LoginController extends GetxController {
     try {
       await AuthenticationRepository.instance.logout();
     } catch (e) {
-      OLoaders.errorSnackBar(title: 'Erreur', message: e.toString());
+      OLoaders.errorSnackBar(title: 'Déconnexion impossible.');
     }
   }
 }

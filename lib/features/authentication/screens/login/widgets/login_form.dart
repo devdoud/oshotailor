@@ -37,7 +37,7 @@ class OLoginForm extends StatelessWidget {
               Obx(
                 () => TextFormField(
                   controller: controller.password,
-                  validator: (value) => OValidator.validatePassword(value),
+                  validator: (value) => OValidator.validateLoginPassword(value),
                   obscureText: controller.hidePassword.value,
                   autofillHints: const [AutofillHints.password],
                   textInputAction: TextInputAction.done,

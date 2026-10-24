@@ -74,10 +74,7 @@ class NotificationService {
       final settings = await FirebaseMessaging.instance.requestPermission();
       if (settings.authorizationStatus == AuthorizationStatus.denied) {
         OLoaders.warningSnackBar(
-          title: 'Notifications désactivées',
-          message:
-              'Activez-les dans les réglages du téléphone pour être alerté des nouvelles commandes.',
-        );
+            title: 'Notifications désactivées dans les réglages.');
       }
 
       final token = await FirebaseMessaging.instance.getToken();
@@ -97,10 +94,7 @@ class NotificationService {
     } catch (e) {
       debugPrint('Device registration failed: $e');
       OLoaders.warningSnackBar(
-        title: 'Notifications indisponibles',
-        message:
-            'Cet appareil n’a pas pu être enregistré. Les nouvelles commandes restent visibles dans l’app.',
-      );
+          title: 'Notifications indisponibles sur cet appareil.');
     }
   }
 

@@ -56,10 +56,7 @@ class TailorOrdersController extends GetxController {
       debugPrint('✅ Fetched ${orders.length} $statusToFetch orders');
     } catch (e) {
       debugPrint('❌ Error fetching orders: $e');
-      OLoaders.errorSnackBar(
-        title: 'Erreur',
-        message: 'Impossible de charger les commandes',
-      );
+      OLoaders.errorSnackBar(title: 'Commandes indisponibles.');
     } finally {
       isLoading.value = false;
     }
@@ -71,20 +68,14 @@ class TailorOrdersController extends GetxController {
       isLoading.value = true;
       await AssignmentService.acceptOrder(assignmentId);
 
-      OLoaders.successSnackBar(
-        title: 'Succès',
-        message: 'Commande acceptée!',
-      );
+      OLoaders.successSnackBar(title: 'Commande acceptée.');
 
       // Refresh the list and the dashboard figures
       await fetchOrders();
       _refreshDashboard();
     } catch (e) {
       debugPrint('❌ Error accepting order: $e');
-      OLoaders.errorSnackBar(
-        title: 'Erreur',
-        message: 'Impossible d\'accepter la commande',
-      );
+      OLoaders.errorSnackBar(title: 'Impossible d’accepter la commande.');
     } finally {
       isLoading.value = false;
     }
@@ -96,20 +87,14 @@ class TailorOrdersController extends GetxController {
       isLoading.value = true;
       await AssignmentService.startOrder(assignmentId);
 
-      OLoaders.successSnackBar(
-        title: 'Succès',
-        message: 'Commande commencée!',
-      );
+      OLoaders.successSnackBar(title: 'Confection démarrée.');
 
       // Refresh the list and the dashboard figures
       await fetchOrders();
       _refreshDashboard();
     } catch (e) {
       debugPrint('❌ Error starting order: $e');
-      OLoaders.errorSnackBar(
-        title: 'Erreur',
-        message: 'Impossible de démarrer la commande',
-      );
+      OLoaders.errorSnackBar(title: 'Impossible de démarrer la commande.');
     } finally {
       isLoading.value = false;
     }
@@ -121,20 +106,14 @@ class TailorOrdersController extends GetxController {
       isLoading.value = true;
       await AssignmentService.completeOrder(assignmentId);
 
-      OLoaders.successSnackBar(
-        title: 'Succès',
-        message: 'Commande terminée!',
-      );
+      OLoaders.successSnackBar(title: 'Commande terminée.');
 
       // Refresh the list and the dashboard figures
       await fetchOrders();
       _refreshDashboard();
     } catch (e) {
       debugPrint('❌ Error completing order: $e');
-      OLoaders.errorSnackBar(
-        title: 'Erreur',
-        message: 'Impossible de terminer la commande',
-      );
+      OLoaders.errorSnackBar(title: 'Impossible de terminer la commande.');
     } finally {
       isLoading.value = false;
     }
@@ -146,20 +125,14 @@ class TailorOrdersController extends GetxController {
       isLoading.value = true;
       await AssignmentService.rejectOrder(assignmentId, reason: reason);
 
-      OLoaders.successSnackBar(
-        title: 'Succès',
-        message: 'Commande rejetée',
-      );
+      OLoaders.successSnackBar(title: 'Commande refusée.');
 
       // Refresh the list and the dashboard figures
       await fetchOrders();
       _refreshDashboard();
     } catch (e) {
       debugPrint('❌ Error rejecting order: $e');
-      OLoaders.errorSnackBar(
-        title: 'Erreur',
-        message: 'Impossible de rejeter la commande',
-      );
+      OLoaders.errorSnackBar(title: 'Impossible de refuser la commande.');
     } finally {
       isLoading.value = false;
     }

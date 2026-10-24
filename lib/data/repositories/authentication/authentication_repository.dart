@@ -68,11 +68,25 @@ class AuthenticationRepository extends GetxController {
       );
       return response;
     } on AuthException catch (e) {
-      // Affichera précisément "Email not confirmed" ou "Invalid login credentials"
-      throw e.message; 
+      debugPrint('Login failed: ${e.statusCode} ${e.message}');
+      throw _loginMessage(e);
     } catch (e) {
-      throw 'Erreur de connexion : Vérifiez votre connexion internet.';
+      debugPrint('Login failed: $e');
+      throw 'Connexion impossible. Vérifiez votre réseau.';
     }
+  }
+
+  /// Supabase answers in English; the tailor gets one short French line.
+  static String _loginMessage(AuthException e) {
+    final m = e.message.toLowerCase();
+    if (m.contains('invalid login credentials')) {
+      return 'E-mail ou mot de passe incorrect.';
+    }
+    if (m.contains('email not confirmed')) return 'E-mail non confirmé.';
+    if (e.statusCode == '429' || m.contains('rate limit')) {
+      return 'Trop de tentatives. Réessayez plus tard.';
+    }
+    return 'Connexion impossible.';
   }
 
   Future<void> logout() async {
