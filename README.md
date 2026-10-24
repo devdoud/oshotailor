@@ -20,6 +20,11 @@ Notifications : Firebase Cloud Messaging.
      ```
    - `lib/firebase_options.dart` : généré par `flutterfire configure`
      (projet Firebase `oshotailor-db96f`).
+   - `android/app/google-services.json` : à télécharger depuis la console
+     Firebase (app Android `com.example.oshotailor`). **Indispensable** :
+     sans lui, Android ne peut pas recevoir de notification app fermée,
+     car le service FCM démarre avant le code Dart. La compilation Android
+     échoue s'il manque.
 3. `flutter run`
 
 Identifiants d'app actuels : `com.example.oshotailor` (Android et iOS). À
