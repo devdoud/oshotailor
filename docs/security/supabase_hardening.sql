@@ -1,14 +1,19 @@
--- Durcissement Supabase pour l'app tailleur Osho.
+-- Durcissement Supabase (base partagée par l'app cliente et l'app tailleur).
 --
--- À RELIRE AVANT D'APPLIQUER. Ce script n'a pas été exécuté : il suppose
--- les tables public.users (id = auth.uid(), role, email) et public.orders
--- (status), telles que l'app les utilise. Vérifiez les noms de colonnes et
--- les politiques RLS déjà en place, puis exécutez-le dans l'éditeur SQL
--- d'un projet de test avant la production.
+-- À RELIRE AVANT D'APPLIQUER, puis à placer comme migration dans le dépôt
+-- qui porte le schéma (osho_supa/supabase/migrations). Non exécuté. Écrit
+-- d'après les migrations de ce dépôt au 2026-10-24 : table public.profiles
+-- (id, email, full_name, role, username, phone, avatar_url), table
+-- public.fcm_tokens, trigger public.handle_new_user. Tester d'abord sur un
+-- projet de test.
+--
+-- Déjà en place, donc non répété ici : RLS « chacun sa ligne » sur profiles
+-- (20260707130000) et bucket « avatars » avec ses règles (20260707120000).
 
--- 1. Un utilisateur ne peut jamais changer son propre rôle, son e-mail ni
---    son identifiant. Seul le service_role (fonctions serveur, back-office)
---    le peut.
+-- 1. Faille : la règle « Users can update own profile » permet à chacun de
+--    modifier SA ligne, y compris la colonne role. N'importe qui peut donc
+--    se déclarer tailor ou admin avec la clé publique. Seul le service_role
+--    (fonctions serveur, back-office) peut changer role, email ou id.
 create or replace function public.prevent_privileged_profile_changes()
 returns trigger
 language plpgsql
@@ -28,14 +33,18 @@ begin
 end;
 $$;
 
-drop trigger if exists users_prevent_privileged_changes on public.users;
-create trigger users_prevent_privileged_changes
-  before update on public.users
+drop trigger if exists profiles_prevent_privileged_changes on public.profiles;
+create trigger profiles_prevent_privileged_changes
+  before update on public.profiles
   for each row execute function public.prevent_privileged_profile_changes();
 
--- 2. À la création d'un profil par l'app, le rôle est imposé côté serveur.
---    Adaptez la valeur par défaut si les comptes tailleurs sont créés
---    autrement (invitation, back-office avec service_role).
+-- 2. Faille : handle_new_user copie le rôle depuis raw_user_meta_data, que
+--    l'utilisateur fournit lui-même à l'inscription
+--    (signUp(data: {role: 'admin'})). À la création d'un profil hors
+--    service_role, le rôle est forcé à 'customer'.
+--    ATTENTION : si des comptes tailleurs sont créés par une inscription
+--    publique avec role='tailor', il faudra les promouvoir ensuite par une
+--    fonction serveur ou le back-office (service_role).
 create or replace function public.force_default_role_on_insert()
 returns trigger
 language plpgsql
@@ -50,63 +59,21 @@ begin
 end;
 $$;
 
-drop trigger if exists users_force_default_role on public.users;
-create trigger users_force_default_role
-  before insert on public.users
+drop trigger if exists profiles_force_default_role on public.profiles;
+create trigger profiles_force_default_role
+  before insert on public.profiles
   for each row execute function public.force_default_role_on_insert();
 
--- 3. RLS : chacun ne lit et ne modifie que sa propre ligne de profil.
---    ATTENTION : si l'une des apps lit le profil d'un autre utilisateur
---    (nom du tailleur côté client, par exemple), ajoutez une politique de
---    lecture adaptée avant d'appliquer celle-ci.
-alter table public.users enable row level security;
-
-drop policy if exists "users_select_own" on public.users;
-create policy "users_select_own" on public.users
-  for select to authenticated using (id = auth.uid());
-
-drop policy if exists "users_update_own" on public.users;
-create policy "users_update_own" on public.users
-  for update to authenticated
-  using (id = auth.uid()) with check (id = auth.uid());
+-- 3. Faille : la règle fcm_tokens_service_select (using (true)) s'applique à
+--    tous les rôles : n'importe quel client peut lire les jetons FCM de tout
+--    le monde. Elle est inutile, car le service_role ignore la RLS ;
+--    fcm_tokens_select_own suffit aux apps.
+drop policy if exists "fcm_tokens_service_select" on public.fcm_tokens;
 
 -- 4. Les statuts de commande ne changent que par les fonctions serveur
---    (update-assignment-status, qui tourne avec service_role). L'app ne
---    modifie plus public.orders directement : on retire ce droit aux clients.
+--    (update-assignment-status, qui tourne avec service_role). L'app tailleur
+--    ne modifie plus public.orders directement.
 --    ATTENTION : vérifiez d'abord que l'app cliente ne modifie pas elle non
 --    plus public.orders (annulation, paiement…), sinon elle cessera de marcher.
 alter table public.orders enable row level security;
 revoke update, delete on public.orders from anon, authenticated;
-
--- 5. Photos de profil : bucket public `avatars`, un dossier par utilisateur
---    (<user id>/avatar.jpg). Lecture publique par URL ; chacun n'écrit,
---    ne remplace et ne supprime que dans son propre dossier.
---    Si l'app cliente utilise déjà un autre bucket pour les avatars, alignez
---    UserRepository.avatarBucket plutôt que d'en créer un second.
-insert into storage.buckets (id, name, public)
-values ('avatars', 'avatars', true)
-on conflict (id) do nothing;
-
-drop policy if exists "avatars_insert_own" on storage.objects;
-create policy "avatars_insert_own" on storage.objects
-  for insert to authenticated
-  with check (bucket_id = 'avatars'
-              and (storage.foldername(name))[1] = auth.uid()::text);
-
-drop policy if exists "avatars_update_own" on storage.objects;
-create policy "avatars_update_own" on storage.objects
-  for update to authenticated
-  using (bucket_id = 'avatars'
-         and (storage.foldername(name))[1] = auth.uid()::text);
-
-drop policy if exists "avatars_select_own" on storage.objects;
-create policy "avatars_select_own" on storage.objects
-  for select to authenticated
-  using (bucket_id = 'avatars'
-         and (storage.foldername(name))[1] = auth.uid()::text);
-
-drop policy if exists "avatars_delete_own" on storage.objects;
-create policy "avatars_delete_own" on storage.objects
-  for delete to authenticated
-  using (bucket_id = 'avatars'
-         and (storage.foldername(name))[1] = auth.uid()::text);

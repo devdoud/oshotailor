@@ -4,7 +4,9 @@ Application Flutter des ateliers partenaires d'Osho : le tailleur reçoit les
 commandes sur mesure, les accepte ou les refuse, suit la confection et la
 marque comme terminée. L'app cliente est un projet séparé.
 
-Données et logique métier : Supabase (auth, tables, fonctions serveur).
+Données et logique métier : Supabase (auth, tables, fonctions serveur),
+partagé avec l'app cliente, dont le dépôt contient les migrations et les
+fonctions serveur. Le profil est dans la table `profiles`.
 Notifications : Firebase Cloud Messaging.
 
 ## Mise en route
@@ -18,10 +20,11 @@ Notifications : Firebase Cloud Messaging.
 
      Future<void> loadEnv() async {}
      ```
-   - `lib/firebase_options.dart` : généré par `flutterfire configure`
-     (projet Firebase `oshotailor-db96f`).
+   - `lib/firebase_options.dart` : généré par
+     `flutterfire configure --project=osho-f0ba3` (projet Firebase commun
+     avec l'app cliente, voir « Notifications »).
    - `android/app/google-services.json` : à télécharger depuis la console
-     Firebase (app Android `com.example.oshotailor`). **Indispensable** :
+     Firebase du projet `osho-f0ba3` (app Android `com.example.oshotailor`). **Indispensable** :
      sans lui, Android ne peut pas recevoir de notification app fermée,
      car le service FCM démarre avant le code Dart. La compilation Android
      échoue s'il manque.
@@ -32,44 +35,39 @@ remplacer par un identifiant définitif avant toute publication en boutique.
 
 ## Notifications de commande
 
-L'app affiche elle-même les notifications (app ouverte, ou message sans bloc
-`notification`), sur le canal Android `new_orders` avec le son `new_order`.
-Le jeton FCM est enregistré dans `tailor_tokens` après la connexion, tenu à
-jour, et supprimé à la déconnexion (`lib/data/services/notification_service.dart`).
+Le serveur est dans le projet de l'app cliente (`osho_supa/supabase`) :
+quand une commande est affectée, `notifyTailorsForOrder` appelle la fonction
+`send-notification`, qui lit les jetons dans la table **`fcm_tokens`** et
+envoie via l'API FCM HTTP v1 :
 
-Contrat attendu de la fonction serveur qui envoie le message, via l'API
-**FCM HTTP v1** (l'ancienne API à « server key » est fermée depuis 2024) :
+- un bloc `notification` (titre « Nouvelle commande », texte) ;
+- `data.type = "new_order"` et `data.order_id` ;
+- `android.notification.channel_id = "osho_high_importance"`.
 
-```json
-{
-  "message": {
-    "token": "<fcm_token de tailor_tokens>",
-    "notification": {
-      "title": "Nouvelle commande",
-      "body": "Aïssatou Diallo — Grand boubou bazin"
-    },
-    "data": {
-      "type": "new_order",
-      "order_id": "<id de la commande>"
-    },
-    "android": {
-      "priority": "high",
-      "notification": { "channel_id": "new_orders", "sound": "new_order" }
-    },
-    "apns": {
-      "payload": { "aps": { "sound": "new_order.caf" } }
-    }
-  }
-}
+Côté app tailleur (`lib/data/services/notification_service.dart`) :
+
+- le jeton est enregistré dans `fcm_tokens` (`user_id`, `token`, `platform`)
+  après la connexion, tenu à jour, et supprimé à la déconnexion ;
+- le canal Android `osho_high_importance` (« Nouvelles commandes ») joue le
+  son `new_order` ;
+- l'app affiche elle-même les messages reçus app ouverte, et ouvre la
+  commande `order_id` au toucher.
+
+**Un seul projet Firebase.** `send-notification` envoie avec le projet
+défini par `FCM_PROJECT_ID`, celui de l'app cliente (`osho-f0ba3`). Un jeton
+n'est valable que pour le projet qui l'a créé : l'app tailleur doit donc être
+enregistrée dans **ce même projet** (app Android `com.example.oshotailor`),
+puis :
+
+```
+flutterfire configure --project=osho-f0ba3
 ```
 
-- `type` : `new_order` ou `order_update`. Les deux rafraîchissent les listes.
-- `order_id` : la commande ouverte quand le tailleur touche la notification.
-- Sans bloc `notification`, l'app affiche quand même un message, avec les
-  champs `data.title` et `data.body` s'ils sont fournis.
+et remplacer `android/app/google-services.json` par celui de ce projet. Avec
+un autre projet Firebase, FCM refuse l'envoi (`SENDER_ID_MISMATCH`).
 
-iOS ne reçoit rien tant que la configuration Firebase iOS, la clé APNs et la
-capacité « Push Notifications » ne sont pas en place dans Xcode.
+iOS ne reçoit rien tant que l'app iOS n'est pas déclarée dans ce projet,
+avec une clé APNs et la capacité « Push Notifications » dans Xcode.
 
 ## Identité visuelle
 

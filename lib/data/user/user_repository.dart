@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:osho/features/personalization/models/user_model.dart';
 
-/// Profile data of the signed-in tailor (Supabase table `users`, bucket
+/// Profile data of the signed-in tailor (Supabase table `profiles`, bucket
 /// `avatars`). Errors are thrown as short French messages, ready to show.
 class UserRepository extends GetxController {
   static UserRepository get instance => Get.find();
@@ -23,7 +23,7 @@ class UserRepository extends GetxController {
   Future<UserModel> fetchUserDetails() async {
     try {
       final response =
-          await _supabase.from('users').select().eq('id', _userId).single();
+          await _supabase.from('profiles').select().eq('id', _userId).single();
       return UserModel.fromJson(response);
     } catch (e) {
       debugPrint('Error fetching user details: $e');
@@ -35,7 +35,7 @@ class UserRepository extends GetxController {
   Future<void> updateUserDetails(UserModel updatedUser) async {
     try {
       await _supabase
-          .from('users')
+          .from('profiles')
           .update(updatedUser.toProfileUpdateJson())
           .eq('id', _userId);
     } catch (e) {
@@ -46,7 +46,7 @@ class UserRepository extends GetxController {
 
   static const _editableFields = {'full_name', 'phone', 'avatar_url'};
 
-  /// Update a user-editable field in the users table.
+  /// Update a user-editable field of the profile.
   /// Privileged columns (role, email, id) are rejected.
   Future<void> updateSingleField(Map<String, dynamic> json) async {
     final forbidden = json.keys.where((k) => !_editableFields.contains(k));
@@ -54,7 +54,7 @@ class UserRepository extends GetxController {
       throw 'Champ non modifiable : ${forbidden.join(', ')}';
     }
     try {
-      await _supabase.from('users').update(json).eq('id', _userId);
+      await _supabase.from('profiles').update(json).eq('id', _userId);
     } catch (e) {
       debugPrint('Error updating field: $e');
       throw 'Enregistrement impossible.';

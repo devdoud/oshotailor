@@ -30,7 +30,7 @@
              canal « Nouvelles commandes », petite icône et couleur Osho. -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
-            android:value="new_orders" />
+            android:value="osho_high_importance" />
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
             android:resource="@drawable/ic_notification" />

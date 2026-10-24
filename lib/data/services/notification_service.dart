@@ -15,16 +15,18 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 /// affichage (app ouverte ou non), son dédié, ouverture de la commande au
 /// toucher, et cycle de vie du jeton FCM côté Supabase.
 ///
-/// Contrat attendu du serveur (champs `data` du message FCM) :
-///   type      : 'new_order' | 'order_update'
-///   order_id  : identifiant de la commande (ou assignment_id)
-///   title, body (facultatifs) : textes affichés si le message n'a pas de
-///   bloc `notification`.
+/// Contrat avec le serveur (fonction `send-notification` du projet client) :
+///   jetons    : table `fcm_tokens` (user_id, token, platform), partagée
+///               avec l'app cliente ;
+///   canal     : `osho_high_importance` ;
+///   data.type : 'new_order' | 'order_update' ; data.order_id : la commande.
+/// Le serveur envoie avec un seul projet Firebase : l'app doit être
+/// enregistrée dans ce même projet, sinon FCM refuse ses jetons.
 class NotificationService {
   NotificationService._();
 
   static const _channel = AndroidNotificationChannel(
-    'new_orders',
+    'osho_high_importance',
     'Nouvelles commandes',
     description: 'Alerte quand un client passe une commande pour votre atelier.',
     importance: Importance.high,
@@ -106,10 +108,10 @@ class NotificationService {
       final token = await FirebaseMessaging.instance.getToken();
       if (userId != null && token != null) {
         await Supabase.instance.client
-            .from('tailor_tokens')
+            .from('fcm_tokens')
             .delete()
-            .eq('tailor_id', userId)
-            .eq('fcm_token', token);
+            .eq('user_id', userId)
+            .eq('token', token);
       }
       await _tokenRefreshSub?.cancel();
       _tokenRefreshSub = null;
@@ -192,13 +194,13 @@ class NotificationService {
   }
 
   static Future<void> _saveToken(String userId, String token) async {
-    await Supabase.instance.client.from('tailor_tokens').upsert(
+    await Supabase.instance.client.from('fcm_tokens').upsert(
       {
-        'tailor_id': userId,
-        'fcm_token': token,
-        'created_at': DateTime.now().toIso8601String(),
+        'user_id': userId,
+        'token': token,
+        'platform': defaultTargetPlatform == TargetPlatform.iOS ? 'ios' : 'android',
       },
-      onConflict: 'tailor_id',
+      onConflict: 'user_id,token',
     );
   }
 
