@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:osho/features/authentication/screens/password_configuration/reset_password.dart';
 import 'package:osho/utils/helpers/network_manager.dart';
-import 'package:osho/utils/popups/full-screen_loader.dart';
+import 'package:osho/utils/popups/full_screen_loader.dart';
 
 import '../../../../common/widgets/loaders/loader.dart';
 import '../../../../utils/constants/image_strings.dart';

@@ -5,7 +5,7 @@ import 'package:osho/common/widgets/loaders/loader.dart';
 import 'package:osho/data/repositories/authentication/authentication_repository.dart';
 import 'package:osho/utils/constants/image_strings.dart';
 import 'package:osho/utils/helpers/network_manager.dart';
-import '../../../../utils/popups/full-screen_loader.dart';
+import '../../../../utils/popups/full_screen_loader.dart';
 
 
 class LoginController extends GetxController {
