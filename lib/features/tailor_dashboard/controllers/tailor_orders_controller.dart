@@ -22,12 +22,12 @@ class TailorOrdersController extends GetxController {
     'completed'
   ];
 
-  /// Tab labels with icons
+  /// Tab labels
   static const Map<String, String> tabLabels = {
-    'pending': '🔔 Pending',
-    'accepted': '✅ Accepted',
-    'in_progress': '🏭 In Progress',
-    'completed': '✓ Completed',
+    'pending': 'En attente',
+    'accepted': 'Acceptées',
+    'in_progress': 'En cours',
+    'completed': 'Terminées',
   };
 
   @override

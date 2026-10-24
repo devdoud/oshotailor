@@ -48,15 +48,15 @@ class TailorOrder {
       case TailorOrderStatus.pending:
         return 'En attente';
       case TailorOrderStatus.accepted:
-        return 'Acceptee';
+        return 'Acceptée';
       case TailorOrderStatus.inProgress:
         return 'En cours';
       case TailorOrderStatus.completed:
-        return 'Terminee';
+        return 'Terminée';
       case TailorOrderStatus.rejected:
-        return 'Refusee';
+        return 'Refusée';
       case TailorOrderStatus.cancelled:
-        return 'Annulee';
+        return 'Annulée';
       case TailorOrderStatus.unknown:
         return 'Inconnue';
     }

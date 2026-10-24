@@ -49,6 +49,7 @@ dependencies:
   firebase_core: ^3.10.1
   firebase_messaging: ^15.2.10
   flutter_local_notifications: ^17.2.4
+  flutter_svg: ^2.3.0
 
 dev_dependencies:
   flutter_test:
@@ -80,9 +81,16 @@ flutter:
   fonts:
     - family: DMSans
       fonts:
-        - asset: assets/fonts/dmsans/bold.ttf
-          weight: 700
-        - asset: assets/fonts/dmsans/regular.ttf
+        - asset: assets/fonts/dmsans/dmsans-400.ttf
           weight: 400
-        - asset: assets/fonts/dmsans/medium.ttf
+        - asset: assets/fonts/dmsans/dmsans-500.ttf
           weight: 500
+        - asset: assets/fonts/dmsans/dmsans-600.ttf
+          weight: 600
+    # Fraunces, coupe optique 72 pt, pour les titres et les prix uniquement.
+    - family: Fraunces
+      fonts:
+        - asset: assets/fonts/fraunces/fraunces-400.ttf
+          weight: 400
+        - asset: assets/fonts/fraunces/fraunces-600.ttf
+          weight: 600

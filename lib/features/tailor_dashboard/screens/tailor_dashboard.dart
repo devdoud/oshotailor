@@ -1,211 +1,76 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:iconsax/iconsax.dart';
-import 'package:intl/intl.dart';
+import 'package:osho/common/widgets/atelier/atelier.dart';
+import 'package:osho/common/widgets/atelier/order_item_section.dart';
+import 'package:osho/common/widgets/atelier/status_tones.dart';
+import 'package:osho/common/widgets/loaders/loader.dart';
 import 'package:osho/features/tailor_dashboard/controllers/tailor_orders_controller.dart';
 import 'package:osho/features/tailor_dashboard/models/tailor_order.dart';
 import 'package:osho/features/tailor_dashboard/screens/tailor_order_detail_screen.dart';
-import 'package:osho/utils/constants/colors.dart';
 
 class TailorDashboardScreen extends StatelessWidget {
   const TailorDashboardScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+
     return GetBuilder<TailorOrdersController>(
       init: TailorOrdersController(),
-      builder: (_) => Obx(
-        () => Scaffold(
-          backgroundColor: const Color(0xFFF8F9FA),
-          body: CustomScrollView(
-            slivers: [
-              // ── Header Premium ───────────────────────────────────────────
-              SliverAppBar(
-                expandedHeight: 140,
-                floating: false,
-                pinned: true,
-                elevation: 0,
-                backgroundColor: OColors.primary,
-                systemOverlayStyle: SystemUiOverlayStyle.light,
-                leading: IconButton(
-                  onPressed: () => Get.back(),
-                  icon: const Icon(Iconsax.arrow_left_2, color: Colors.white, size: 22),
-                ),
-                actions: [
-                  Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      IconButton(
-                        onPressed: () {},
-                        icon: const Icon(Iconsax.notification, color: Colors.white, size: 24),
+      builder: (c) => Scaffold(
+        body: SafeArea(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(kGutter, 16, 4, 8),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Semantics(
+                        header: true,
+                        child: Text('Commandes', style: text.headlineMedium),
                       ),
-                      if (_.orders.isNotEmpty)
-                        Positioned(
-                          right: 8,
-                          top: 8,
-                          child: Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: const BoxDecoration(color: OColors.secondary, shape: BoxShape.circle),
-                            constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
-                            child: Text(
-                              _.orders.length.toString(),
-                              style: const TextStyle(color: OColors.primary, fontSize: 10, fontWeight: FontWeight.bold),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(width: 8),
-                ],
-                flexibleSpace: FlexibleSpaceBar(
-                  centerTitle: false,
-                  titlePadding: const EdgeInsets.only(left: 20, bottom: 16),
-                  title: const Text(
-                    'Mes Commandes',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: -0.5,
                     ),
-                  ),
-                  background: Stack(
-                    children: [
-                      Positioned.fill(
-                        child: Container(
-                          decoration: const BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [Color(0xFF181818), Color(0xFF2D2D2D)],
-                            ),
-                          ),
-                        ),
-                      ),
-                      // Cercles décoratifs subtils
-                      Positioned(
-                        top: -50,
-                        right: -50,
-                        child: Container(
-                          width: 150,
-                          height: 150,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.white.withOpacity(0.03),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                    Obx(() => OIconButton(
+                          icon: OIcons.refresh,
+                          tooltip: 'Actualiser',
+                          onPressed:
+                              c.isLoading.value ? null : () => c.fetchOrders(),
+                        )),
+                  ],
                 ),
               ),
-
-              // ── Tab Bar (Filtrage) ───────────────────────────────────────
-              SliverToBoxAdapter(
-                child: Container(
-                  color: OColors.primary,
-                  child: Container(
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFF8F9FA),
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(30),
-                        topRight: Radius.circular(30),
-                      ),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 24, bottom: 12),
-                      child: SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        physics: const BouncingScrollPhysics(),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: Row(
-                            children: TailorOrdersController.statusTabs.map((tab) {
-                              final isSelected = _.activeTab.value == tab;
-                              final label = TailorOrdersController.tabLabels[tab] ?? tab;
-                              
-                              return Padding(
-                                padding: const EdgeInsets.only(right: 10),
-                                child: GestureDetector(
-                                  onTap: () => _.switchTab(tab),
-                                  child: AnimatedContainer(
-                                    duration: const Duration(milliseconds: 300),
-                                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                                    decoration: BoxDecoration(
-                                      color: isSelected ? OColors.primary : Colors.white,
-                                      borderRadius: BorderRadius.circular(16),
-                                      boxShadow: [
-                                        if (isSelected)
-                                          BoxShadow(
-                                            color: OColors.primary.withOpacity(0.2),
-                                            blurRadius: 10,
-                                            offset: const Offset(0, 4),
-                                          )
-                                        else
-                                          BoxShadow(
-                                            color: Colors.black.withOpacity(0.03),
-                                            blurRadius: 10,
-                                            offset: const Offset(0, 2),
-                                          ),
-                                      ],
-                                    ),
-                                    child: Text(
-                                      label,
-                                      style: TextStyle(
-                                        color: isSelected ? Colors.white : OColors.grey2,
-                                        fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                                        fontSize: 13,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              );
-                            }).toList(),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-
-              // ── Liste des commandes ──────────────────────────────────────
-              SliverPadding(
-                padding: const EdgeInsets.all(20),
-                sliver: _.isLoading.value
-                    ? const SliverFillRemaining(
-                        child: Center(child: CircularProgressIndicator(color: OColors.secondary)),
-                      )
-                    : _.orders.isEmpty
-                        ? SliverFillRemaining(
-                            child: Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Iconsax.box, size: 64, color: Colors.grey[300]),
-                                  const SizedBox(height: 16),
-                                  Text(
-                                    'Aucune commande trouvée',
-                                    style: TextStyle(color: Colors.grey[400], fontWeight: FontWeight.w700, fontSize: 16),
-                                  ),
-                                ],
-                              ),
-                            ),
+              Obx(() => _StatusTabs(
+                    active: c.activeTab.value,
+                    onSelect: c.switchTab,
+                  )),
+              Expanded(
+                child: Obx(() {
+                  if (c.isLoading.value && c.orders.isEmpty) {
+                    return const OLoader(size: 28);
+                  }
+                  return RefreshIndicator(
+                    onRefresh: () => c.fetchOrders(),
+                    child: c.orders.isEmpty
+                        ? ListView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            children: const [
+                              OEmptyState('Aucune commande dans cet onglet.'),
+                            ],
                           )
-                        : SliverList(
-                            delegate: SliverChildBuilderDelegate(
-                              (context, index) {
-                                final order = _.orders[index];
-                                return Padding(
-                                  padding: const EdgeInsets.only(bottom: 16),
-                                  child: _buildOrderCard(context, _, order),
-                                );
-                              },
-                              childCount: _.orders.length,
+                        : ListView.builder(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            padding: const EdgeInsets.fromLTRB(
+                                kGutter, 0, kGutter, 24),
+                            itemCount: c.orders.length,
+                            itemBuilder: (context, index) => _OrderRow(
+                              order: c.orders[index],
+                              controller: c,
                             ),
                           ),
+                  );
+                }),
               ),
             ],
           ),
@@ -213,153 +78,175 @@ class TailorDashboardScreen extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _buildOrderCard(BuildContext context, TailorOrdersController controller, TailorOrder order) {
-    return GestureDetector(
-      onTap: () => Get.to(() => TailorOrderDetailScreen(orderId: order.orderId)),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 15,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Column(
+/// Filtres par statut : l'onglet actif est souligné d'un trait d'encre.
+class _StatusTabs extends StatelessWidget {
+  const _StatusTabs({required this.active, required this.onSelect});
+
+  final String active;
+  final ValueChanged<String> onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.osho;
+    return Container(
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: t.hairline)),
+      ),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: kGutter - 4),
+        child: Row(
           children: [
-            Row(
-              children: [
-                // Image
-                Container(
-                  width: 65,
-                  height: 65,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(18),
-                    color: OColors.grey1,
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(18),
-                    child: order.thumbnailUrl != null
-                        ? Image.network(order.thumbnailUrl!, fit: BoxFit.cover)
-                        : const Icon(Iconsax.image, color: OColors.primary, size: 28),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                // Client Info
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        order.clientName,
-                        style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, letterSpacing: -0.5),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        order.modelName,
-                        style: TextStyle(color: Colors.grey[600], fontSize: 13, fontWeight: FontWeight.w600),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        '#${_shortId(order.orderId).toUpperCase()}',
-                        style: TextStyle(color: Colors.grey[400], fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1),
-                      ),
-                    ],
-                  ),
-                ),
-                // Status Badge
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: _statusColor(order.status).withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        order.statusLabel,
-                        style: TextStyle(color: _statusColor(order.status), fontSize: 10, fontWeight: FontWeight.w900),
+            for (final tab in TailorOrdersController.statusTabs)
+              Semantics(
+                button: true,
+                selected: tab == active,
+                child: InkWell(
+                  onTap: () => onSelect(tab),
+                  child: Container(
+                    height: 48,
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    margin: const EdgeInsets.symmetric(horizontal: 6),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(
+                          color: tab == active
+                              ? t.ink
+                              : t.bg.withValues(alpha: 0),
+                          width: 2,
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 10),
-                    Text(
-                      '${NumberFormat.decimalPattern('fr_FR').format(order.amount)} F',
-                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: OColors.primary),
+                    child: Text(
+                      TailorOrdersController.tabLabels[tab] ?? tab,
+                      style: OType.text(
+                        OType.secondary,
+                        tab == active ? t.ink : t.muted,
+                        weight:
+                            tab == active ? FontWeight.w600 : FontWeight.w500,
+                      ),
                     ),
-                  ],
+                  ),
                 ),
-              ],
-            ),
-            
-            // Actions dynamiques
-            if (order.canAcceptOrReject || order.canStart || order.canComplete) ...[
-              const SizedBox(height: 16),
-              const Divider(color: Color(0xFFF0F0F0), height: 1),
-              const SizedBox(height: 16),
-              _buildActions(controller, order),
-            ],
+              ),
           ],
         ),
       ),
     );
-  }
-
-  Widget _buildActions(TailorOrdersController controller, TailorOrder order) {
-    if (order.canAcceptOrReject) {
-      return Row(
-        children: [
-          Expanded(child: _miniButton('Refuser', Colors.red.withOpacity(0.1), Colors.red, () => controller.rejectOrder(order.assignmentId))),
-          const SizedBox(width: 12),
-          Expanded(child: _miniButton('Accepter', OColors.primary, Colors.white, () => controller.acceptOrder(order.assignmentId))),
-        ],
-      );
-    }
-    if (order.canStart) {
-      return _miniButton('Commencer', Colors.blue, Colors.white, () => controller.startOrder(order.assignmentId));
-    }
-    if (order.canComplete) {
-      return _miniButton('Terminer', Colors.green, Colors.white, () => controller.completeOrder(order.assignmentId));
-    }
-    return const SizedBox.shrink();
-  }
-
-  Widget _miniButton(String label, Color bg, Color fg, VoidCallback onTap) {
-    return ElevatedButton(
-      onPressed: onTap,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: bg,
-        foregroundColor: fg,
-        elevation: 0,
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      ),
-      child: Text(label, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
-    );
-  }
-
-  String _shortId(String id) => id.length <= 8 ? id : id.substring(0, 8);
-
-  Color _statusColor(TailorOrderStatus status) {
-    switch (status) {
-      case TailorOrderStatus.pending: return Colors.orange;
-      case TailorOrderStatus.accepted: return Colors.blue;
-      case TailorOrderStatus.inProgress: return Colors.purple;
-      case TailorOrderStatus.completed: return Colors.green;
-      case TailorOrderStatus.cancelled:
-      case TailorOrderStatus.rejected: return Colors.red;
-      default: return Colors.grey;
-    }
   }
 }
 
+class _OrderRow extends StatelessWidget {
+  const _OrderRow({required this.order, required this.controller});
 
+  final TailorOrder order;
+  final TailorOrdersController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.osho;
+    final hasActions =
+        order.canAcceptOrReject || order.canStart || order.canComplete;
+
+    return Container(
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: t.hairline)),
+      ),
+      padding: const EdgeInsets.symmetric(vertical: 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          MergeSemantics(
+            child: InkWell(
+              onTap: () => Get.to(
+                  () => TailorOrderDetailScreen(orderId: order.orderId)),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  OThumb(url: order.thumbnailUrl, size: 56),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(order.clientName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: OType.text(OType.body, t.ink,
+                                weight: FontWeight.w600)),
+                        const SizedBox(height: 2),
+                        Text(order.modelName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: OType.text(OType.secondary, t.muted)),
+                        const SizedBox(height: 6),
+                        OStatusTag(order.statusLabel, order.status.tone),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(formatFcfa(order.amount),
+                          style: OType.price(16, t.ink)),
+                      const SizedBox(height: 4),
+                      Text('N° ${shortRef(order.orderId)}',
+                          style: OType.text(OType.caption, t.muted)
+                              .copyWith(fontFeatures: const [
+                            FontFeature.tabularFigures()
+                          ])),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (hasActions) ...[
+            const SizedBox(height: 12),
+            _actions(),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _actions() {
+    final busy = controller.isLoading.value;
+    if (order.canAcceptOrReject) {
+      return Row(
+        children: [
+          Expanded(
+            child: OutlinedButton(
+              onPressed:
+                  busy ? null : () => controller.rejectOrder(order.assignmentId),
+              style: OutlinedButton.styleFrom(minimumSize: const Size(48, 48)),
+              child: const Text('Refuser'),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: ElevatedButton(
+              onPressed:
+                  busy ? null : () => controller.acceptOrder(order.assignmentId),
+              style: ElevatedButton.styleFrom(minimumSize: const Size(48, 48)),
+              child: const Text('Accepter'),
+            ),
+          ),
+        ],
+      );
+    }
+    return ElevatedButton(
+      onPressed: busy
+          ? null
+          : order.canStart
+              ? () => controller.startOrder(order.assignmentId)
+              : () => controller.completeOrder(order.assignmentId),
+      style: ElevatedButton.styleFrom(minimumSize: const Size(48, 48)),
+      child: Text(order.canStart ? 'Commencer' : 'Terminer'),
+    );
+  }
+}

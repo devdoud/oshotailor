@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:osho/utils/constants/colors.dart';
-import 'package:osho/utils/constants/sizes.dart';
-import 'package:osho/utils/helpers/helper_functions.dart';
+import 'package:osho/common/widgets/atelier/atelier.dart';
+import 'package:osho/utils/theme/theme.dart';
 
 class OnBoardingPage extends StatelessWidget {
   const OnBoardingPage({
@@ -18,85 +17,42 @@ class OnBoardingPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(OSizes.defaultSpace),
-      child: Column(
-        children: [
-          const SizedBox(height: OSizes.spaceBtwSections * 2),
-          // Featured Image with soft shadow and rounded corners
-          Container(
-            height: OHelperFunctions.screenHeight() * 0.45,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(32),
-              image: DecorationImage(
-                image: AssetImage(image),
-                fit: BoxFit.cover,
+    final t = context.osho;
+    final paragraphs = [subTitle, subTitle2, subTitle3]
+        .where((s) => s.trim().isNotEmpty)
+        .toList();
+
+    return LayoutBuilder(
+      builder: (context, constraints) => SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(kGutter, 16, kGutter, 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            /// Featured image: flat, square corners, no shadow
+            ClipRRect(
+              borderRadius: OshoTheme.borderRadius,
+              child: ExcludeSemantics(
+                child: Image.asset(
+                  image,
+                  height: constraints.maxHeight * 0.58,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                ),
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.08),
-                  blurRadius: 30,
-                  offset: const Offset(0, 15),
-                ),
-              ],
             ),
-          ),
-          const SizedBox(height: OSizes.spaceBtwSections * 1.5),
-          // Text Content with modern typography
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Text(
-                  title,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        color: OColors.primary,
-                        fontSize: 26,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: -0.5,
-                      ),
-                ),
-                const SizedBox(height: OSizes.spaceBtwItems),
-                Text(
-                  subTitle,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: OColors.grey,
-                        fontSize: 16,
-                        height: 1.6,
-                        fontWeight: FontWeight.w400,
-                      ),
-                ),
-                if (subTitle2.isNotEmpty) ...[
-                  const SizedBox(height: OSizes.xs),
-                  Text(
-                    subTitle2,
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: OColors.grey,
-                          fontSize: 16,
-                          height: 1.6,
-                        ),
-                  ),
-                ],
-                if (subTitle3.isNotEmpty) ...[
-                  const SizedBox(height: OSizes.xs),
-                  Text(
-                    subTitle3,
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: OColors.grey,
-                          fontSize: 16,
-                          height: 1.6,
-                        ),
-                  ),
-                ],
-              ],
+            const SizedBox(height: 28),
+            Semantics(
+              header: true,
+              child: Text(title,
+                  style: Theme.of(context).textTheme.headlineMedium),
             ),
-          ),
-        ],
+            const SizedBox(height: 10),
+            for (final p in paragraphs) ...[
+              Text(p, style: OType.text(OType.body, t.muted, height: 1.55)),
+              const SizedBox(height: 6),
+            ],
+          ],
+        ),
       ),
     );
   }

@@ -1,33 +1,38 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:osho/common/widgets/atelier/atelier.dart';
 import 'package:osho/features/authentication/controllers/onboarding/onboarding_controller.dart';
-import 'package:osho/utils/constants/colors.dart';
-import 'package:osho/utils/constants/sizes.dart';
-import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
+/// Indicateur de page : trois traits fins, celui de la page courante à
+/// l'encre et plus long. Non tactile ; on avance par le bouton ou au doigt.
 class OnBoardingDotNavigation extends StatelessWidget {
-  const OnBoardingDotNavigation({
-    super.key,
-  });
+  const OnBoardingDotNavigation({super.key});
+
+  static const _count = 3;
 
   @override
   Widget build(BuildContext context) {
     final controller = OnBoardingController.instance;
-    return Positioned(
-        bottom: OSizes.defaultSpace * 6,
-        left: 0,
-        right: 0,
-        child: Center(
-          child: SmoothPageIndicator(
-            controller: controller.pageController,
-            onDotClicked: controller.dotNavigationClick,
-            count: 3,
-            effect: ExpandingDotsEffect(
-              dotHeight: 6,
-              dotWidth: 10,
-              activeDotColor: OColors.primary,
-              dotColor: OColors.grey.withValues(alpha: 0.2),
-            ),
-          ),
-        ));
+    final t = context.osho;
+    return Obx(() {
+      final current = controller.currentPageIndex.value;
+      return Semantics(
+        label: 'Page ${current + 1} sur $_count',
+        excludeSemantics: true,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            for (var i = 0; i < _count; i++)
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                margin: const EdgeInsets.symmetric(horizontal: 3),
+                width: i == current ? 28 : 14,
+                height: 2,
+                color: i == current ? t.ink : t.muted,
+              ),
+          ],
+        ),
+      );
+    });
   }
 }

@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:osho/utils/constants/colors.dart';
+import 'package:osho/utils/theme/osho_tokens.dart';
+import 'package:osho/utils/theme/osho_type.dart';
+import 'package:osho/utils/theme/theme.dart';
 
+/// Indicateur de chargement : un arc d'encre, bouts francs, sans dégradé.
 class OLoader extends StatelessWidget {
-  const OLoader({super.key, this.color, this.size = 44.0});
+  const OLoader({super.key, this.color, this.size = 36.0});
 
   final Color? color;
   final double size;
@@ -11,165 +14,68 @@ class OLoader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: _ModernSpinner(
-        color: color ?? OColors.primary,
-        size: size,
+      child: SizedBox.square(
+        dimension: size,
+        child: CircularProgressIndicator(
+          strokeWidth: 2,
+          strokeCap: StrokeCap.butt,
+          color: color ?? context.osho.ink,
+          semanticsLabel: 'Chargement',
+        ),
       ),
     );
-  }
-}
-
-class _ModernSpinner extends StatefulWidget {
-  final Color color;
-  final double size;
-
-  const _ModernSpinner({
-    required this.color,
-    required this.size,
-  });
-
-  @override
-  State<_ModernSpinner> createState() => _ModernSpinnerState();
-}
-
-class _ModernSpinnerState extends State<_ModernSpinner>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1000), // Smooth 1s rotation
-    )..repeat();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: widget.size,
-      width: widget.size,
-      child: AnimatedBuilder(
-        animation: _controller,
-        builder: (context, child) {
-          return CustomPaint(
-            painter: _SpinnerPainter(
-              color: widget.color,
-              angle: _controller.value * 2 * 3.14159,
-            ),
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _SpinnerPainter extends CustomPainter {
-  final Color color;
-  final double angle;
-
-  _SpinnerPainter({required this.color, required this.angle});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final Paint paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3.5 // Slightly thicker for visibility but still elegant
-      ..strokeCap = StrokeCap.round; // Round ends for softness
-
-    final double radius = (size.width - paint.strokeWidth) / 2;
-    final Offset center = Offset(size.width / 2, size.height / 2);
-
-    // Rotate the canvas
-    canvas.save();
-    canvas.translate(center.dx, center.dy);
-    canvas.rotate(angle);
-    canvas.translate(-center.dx, -center.dy);
-
-    // Draw the gradient arc (the "tail")
-    // We draw multiple small arcs with decreasing opacity to simulate a gradient
-    // This is more performant and cleaner than a sweep gradient for a simple spinner sometimes,
-    // but a SweepGradient is actually "smoother" if we want a true continuous fade.
-    // Let's use a SweepGradient for the "perfect" soft look.
-
-    final Rect rect = Rect.fromCircle(center: center, radius: radius);
-    
-    final Gradient gradient = SweepGradient(
-      startAngle: 0.0,
-      endAngle: 3.14159 * 1.5, // 270 degrees arc
-      colors: [
-        color.withOpacity(0.0), // Transparent tail
-        color.withOpacity(0.1),
-        color.withOpacity(0.5),
-        color, // Solid head
-      ],
-      stops: const [0.0, 0.2, 0.7, 1.0],
-    );
-
-    paint.shader = gradient.createShader(rect);
-
-    // Draw an arc that isn't a full circle
-    canvas.drawArc(rect, 0.0, 3.14159 * 1.5, false, paint);
-
-    canvas.restore();
-  }
-
-  @override
-  bool shouldRepaint(covariant _SpinnerPainter oldDelegate) {
-    return oldDelegate.angle != angle || oldDelegate.color != color;
   }
 }
 
 class OLoaders {
-  static void warningSnackBar({required String title, String? message}) {
+  static OshoTokens get _t =>
+      Get.context != null ? OshoTokens.of(Get.context!) : OshoTokens.light;
+
+  static void _show(String title, String? message, Color bg, Color border,
+      Color ink, Duration duration) {
     Get.snackbar(
       title,
       message ?? '',
       isDismissible: true,
-      shouldIconPulse: true,
-      colorText: Colors.white,
-      backgroundColor: Colors.orange,
+      colorText: ink,
+      backgroundColor: bg,
+      borderColor: border,
+      borderWidth: 1,
+      borderRadius: OshoTheme.radius,
+      boxShadows: const [],
       snackPosition: SnackPosition.BOTTOM,
-      duration: const Duration(seconds: 3),
-      margin: const EdgeInsets.all(20),
-      icon: const Icon(Icons.warning, color: Colors.white),
+      duration: duration,
+      margin: const EdgeInsets.all(16),
+      titleText: Text(title,
+          style: OType.text(OType.body, ink, weight: FontWeight.w600)),
+      messageText: message == null || message.isEmpty
+          ? const SizedBox.shrink()
+          : Text(message, style: OType.text(OType.secondary, ink)),
     );
   }
 
-  static void successSnackBar({required String title, String? message, int duration = 3}) {
-    Get.snackbar(
-      title,
-      message ?? '',
-      isDismissible: true,
-      shouldIconPulse: true,
-      colorText: Colors.white,
-      backgroundColor: OColors.primary,
-      snackPosition: SnackPosition.BOTTOM,
-      duration: Duration(seconds: duration),
-      margin: const EdgeInsets.all(10),
-      icon: const Icon(Icons.check, color: Colors.white),
-    );
+  static void infoSnackBar({required String title, String? message}) {
+    final t = _t;
+    _show(title, message, t.surface, t.hairline, t.ink,
+        const Duration(seconds: 3));
+  }
+
+  static void warningSnackBar({required String title, String? message}) {
+    final t = _t;
+    _show(title, message, t.warnBg, t.warnBorder, t.warnInk,
+        const Duration(seconds: 3));
+  }
+
+  static void successSnackBar(
+      {required String title, String? message, int duration = 3}) {
+    final t = _t;
+    _show(title, message, t.okBg, t.okBorder, t.okInk,
+        Duration(seconds: duration));
   }
 
   static void errorSnackBar({required String title, String? message}) {
-    Get.snackbar(
-      title,
-      message ?? '',
-      isDismissible: true,
-      shouldIconPulse: true,
-      colorText: Colors.white,
-      backgroundColor: Colors.red.shade600,
-      snackPosition: SnackPosition.BOTTOM,
-      duration: const Duration(seconds: 3),
-      margin: const EdgeInsets.all(20),
-      icon: const Icon(Icons.warning, color: Colors.white),
-    );
+    final t = _t;
+    _show(title, message, t.dangerBg, t.dangerBorder, t.dangerInk,
+        const Duration(seconds: 4));
   }
 }

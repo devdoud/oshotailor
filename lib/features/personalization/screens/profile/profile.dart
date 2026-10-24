@@ -1,14 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:iconsax/iconsax.dart';
-import 'package:osho/common/widgets/appbar/appbar.dart';
-import 'package:osho/common/widgets/images/o_circular_image.dart';
+import 'package:osho/common/widgets/atelier/atelier.dart';
+import 'package:osho/common/widgets/loaders/loader.dart';
 import 'package:osho/features/personalization/controllers/user_controller.dart';
-import 'package:osho/features/personalization/models/user_model.dart';
-import 'package:osho/features/personalization/screens/profile/widgets/profile_menu.dart';
-import 'package:osho/utils/constants/colors.dart';
 import 'package:osho/utils/constants/image_strings.dart';
-import 'package:osho/utils/constants/sizes.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -16,223 +12,218 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = UserController.instance;
-    
+    final t = context.osho;
+
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: const OAppBar(
-        showBackArrow: true,
-        title: Text('Profil Professionnel', style: TextStyle(fontWeight: FontWeight.bold)),
-      ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(OSizes.defaultSpace),
-          child: Column(
+      appBar: AppBar(title: const Text('Profil professionnel')),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(kGutter, 24, kGutter, 32),
+        children: [
+          Row(
             children: [
-              // Photo de profil
-              SizedBox(
-                width: double.infinity,
-                child: Column(
+              Obx(() {
+                final networkImage = controller.user.value.profilePicture;
+                return OThumb(
+                  url: networkImage.isNotEmpty ? networkImage : OImages.profile,
+                  asset: networkImage.isEmpty,
+                  size: 88,
+                  semanticLabel: 'Photo de profil',
+                );
+              }),
+              const SizedBox(width: 16),
+              TextButton(
+                onPressed: () => controller.uploadUserProfilePicture(),
+                child: const Text('Changer la photo'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 32),
+          const OSectionLabel("Informations de l'atelier"),
+          const SizedBox(height: 4),
+          const OHairline(),
+          Obx(() => OSpecRow(
+                label: 'Atelier',
+                value: controller.user.value.fullName,
+                tapHint: 'Modifier le nom',
+                onTap: () => _showUpdateNameSheet(context, controller),
+              )),
+          Obx(() => OSpecRow(
+                label: 'E-mail',
+                value: controller.user.value.email,
+              )),
+          Obx(() {
+            final phone = controller.user.value.phone;
+            return OSpecRow(
+              label: 'Téléphone',
+              value: phone.isEmpty ? 'Ajouter' : phone,
+              tabular: phone.isNotEmpty,
+              tapHint: 'Modifier le téléphone',
+              onTap: () => _showUpdatePhoneSheet(context, controller),
+            );
+          }),
+          const SizedBox(height: 32),
+          const OSectionLabel('Paramètres techniques'),
+          const SizedBox(height: 4),
+          const OHairline(),
+          Obx(() {
+            final id = controller.user.value.id;
+            return OSpecRow(
+              label: 'ID atelier',
+              value: id.length > 10 ? '${id.substring(0, 10)}…' : id,
+              tabular: true,
+              tapHint: "Copier l'identifiant",
+              onTap: () {
+                Clipboard.setData(ClipboardData(text: id));
+                OLoaders.infoSnackBar(title: 'Identifiant copié');
+              },
+            );
+          }),
+          Obx(() {
+            final role = controller.user.value.role.trim();
+            return OSpecRow(
+              label: 'Rôle',
+              value: role.isEmpty
+                  ? role
+                  : role[0].toUpperCase() + role.substring(1).toLowerCase(),
+            );
+          }),
+          const SizedBox(height: 40),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton(
+              onPressed: () => _showDeleteConfirmation(context),
+              style: TextButton.styleFrom(foregroundColor: t.dangerInk),
+              child: const Text('Supprimer mon compte professionnel'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showSheet(BuildContext context,
+      {required String title, required List<Widget> children}) {
+    return showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(
+            bottom: MediaQuery.of(ctx).viewInsets.bottom),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(kGutter, 20, kGutter, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
                   children: [
-                    Obx(() {
-                      final networkImage = controller.user.value.profilePicture;
-                      final image = networkImage.isNotEmpty ? networkImage : OImages.profile;
-                      return OCircularImage(
-                        image: image, 
-                        width: 100, 
-                        height: 100, 
-                        isNetworkImage: networkImage.isNotEmpty
-                      );
-                    }),
-                    const SizedBox(height: 12),
-                    TextButton(
-                      onPressed: () => controller.uploadUserProfilePicture(), 
-                      child: const Text('Changer la photo de profil', style: TextStyle(color: OColors.primary, fontWeight: FontWeight.bold)),
+                    Expanded(
+                      child: Text(title,
+                          style: Theme.of(ctx).textTheme.titleLarge),
+                    ),
+                    OIconButton(
+                      icon: OIcons.close,
+                      tooltip: 'Fermer',
+                      onPressed: () => Navigator.of(ctx).pop(),
                     ),
                   ],
                 ),
-              ),
-
-              const SizedBox(height: OSizes.spaceBtwItems / 2),
-              const Divider(),
-              const SizedBox(height: OSizes.spaceBtwItems),
-
-              // Informations de base
-              _buildSectionHeader('Informations de l\'Atelier'),
-              const SizedBox(height: OSizes.spaceBtwItems),
-
-              Obx(() => OProfileMenu(
-                title: 'Atelier', 
-                value: controller.user.value.fullName, 
-                onPressed: () => _showUpdateNameDialog(context, controller)
-              )),
-              Obx(() => OProfileMenu(
-                title: 'E-mail', 
-                value: controller.user.value.email, 
-                onPressed: () => Get.snackbar("Info", "L'email ne peut pas être modifié car il est lié à votre identifiant.")
-              )),
-              Obx(() => OProfileMenu(
-                title: 'Téléphone', 
-                value: controller.user.value.phone.isEmpty ? 'Non renseigné' : controller.user.value.phone, 
-                onPressed: () => _showUpdatePhoneDialog(context, controller)
-              )),
-
-              const SizedBox(height: OSizes.spaceBtwItems),
-              const Divider(),
-              const SizedBox(height: OSizes.spaceBtwItems),
-
-              // Informations techniques
-              _buildSectionHeader('Paramètres Techniques'),
-              const SizedBox(height: OSizes.spaceBtwItems),
-              
-              OProfileMenu(title: 'ID Atelier', value: controller.user.value.id.length > 10 ? controller.user.value.id.substring(0, 10) : controller.user.value.id, onPressed: () {}, icon: Iconsax.copy),
-              Obx(() => OProfileMenu(title: 'Rôle', value: controller.user.value.role.toUpperCase(), onPressed: () {}, icon: Iconsax.info_circle)),
-
-              const SizedBox(height: 40),
-              
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton(
-                  onPressed: () => _showDeleteConfirmation(context),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.red,
-                    side: const BorderSide(color: Colors.red),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  child: const Text('Supprimer mon compte professionnel', style: TextStyle(fontWeight: FontWeight.bold)),
-                ),
-              ),
-              const SizedBox(height: OSizes.spaceBtwSections),
-            ],
+                const SizedBox(height: 16),
+                ...children,
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildSectionHeader(String title) {
-    return Row(
-      children: [
-        Text(
-          title,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Colors.black87),
-        ),
-      ],
-    );
+  void _showUpdateNameSheet(BuildContext context, UserController controller) {
+    final firstNameController =
+        TextEditingController(text: controller.user.value.firstName);
+    final lastNameController =
+        TextEditingController(text: controller.user.value.lastName);
+
+    _showSheet(context, title: "Nom de l'atelier", children: [
+      TextField(
+        controller: firstNameController,
+        textCapitalization: TextCapitalization.words,
+        decoration: const InputDecoration(labelText: 'Prénom'),
+      ),
+      const SizedBox(height: 12),
+      TextField(
+        controller: lastNameController,
+        textCapitalization: TextCapitalization.words,
+        decoration:
+            const InputDecoration(labelText: "Nom ou nom de l'atelier"),
+      ),
+      const SizedBox(height: 20),
+      ElevatedButton(
+        onPressed: () {
+          final updatedUser = controller.user.value;
+          updatedUser.firstName = firstNameController.text.trim();
+          updatedUser.lastName = lastNameController.text.trim();
+          controller.updateProfile(updatedUser);
+          Navigator.of(context).pop();
+        },
+        child: const Text('Enregistrer'),
+      ),
+    ]);
   }
 
-  void _showUpdateNameDialog(BuildContext context, UserController controller) {
-    final firstNameController = TextEditingController(text: controller.user.value.firstName);
-    final lastNameController = TextEditingController(text: controller.user.value.lastName);
+  void _showUpdatePhoneSheet(BuildContext context, UserController controller) {
+    final phoneController =
+        TextEditingController(text: controller.user.value.phone);
 
-    Get.bottomSheet(
-      Container(
-        padding: const EdgeInsets.all(24),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Modifier le nom de l\'atelier', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 20),
-            TextField(
-              controller: firstNameController,
-              decoration: const InputDecoration(labelText: 'Prénom', border: OutlineInputBorder()),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: lastNameController,
-              decoration: const InputDecoration(labelText: 'Nom / Nom de l\'atelier', border: OutlineInputBorder()),
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  final updatedUser = controller.user.value;
-                  updatedUser.firstName = firstNameController.text.trim();
-                  updatedUser.lastName = lastNameController.text.trim();
-                  controller.updateProfile(updatedUser);
-                  Get.back();
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: OColors.primary,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                child: const Text('Enregistrer les modifications', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-              ),
-            ),
-          ],
-        ),
+    _showSheet(context, title: 'Téléphone', children: [
+      TextField(
+        controller: phoneController,
+        keyboardType: TextInputType.phone,
+        autofillHints: const [AutofillHints.telephoneNumber],
+        decoration: const InputDecoration(labelText: 'Numéro de téléphone'),
       ),
-    );
-  }
-
-  void _showUpdatePhoneDialog(BuildContext context, UserController controller) {
-    final phoneController = TextEditingController(text: controller.user.value.phone);
-
-    Get.bottomSheet(
-      Container(
-        padding: const EdgeInsets.all(24),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Numéro de téléphone', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 20),
-            TextField(
-              controller: phoneController,
-              keyboardType: TextInputType.phone,
-              decoration: const InputDecoration(
-                labelText: 'Téléphone', 
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Iconsax.call),
-              ),
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  final updatedUser = controller.user.value;
-                  updatedUser.phone = phoneController.text.trim();
-                  controller.updateProfile(updatedUser);
-                  Get.back();
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: OColors.primary,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                child: const Text('Mettre à jour', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-              ),
-            ),
-          ],
-        ),
+      const SizedBox(height: 20),
+      ElevatedButton(
+        onPressed: () {
+          final updatedUser = controller.user.value;
+          updatedUser.phone = phoneController.text.trim();
+          controller.updateProfile(updatedUser);
+          Navigator.of(context).pop();
+        },
+        child: const Text('Enregistrer'),
       ),
-    );
+    ]);
   }
 
   void _showDeleteConfirmation(BuildContext context) {
-    Get.defaultDialog(
-      title: 'Supprimer le compte ?',
-      middleText: 'Cette action est irréversible. Toutes vos données d\'atelier seront perdues.',
-      textConfirm: 'Supprimer',
-      textCancel: 'Annuler',
-      confirmTextColor: Colors.white,
-      onConfirm: () {
-        // Logique de suppression
-        Get.back();
-        Get.snackbar("Action requise", "Pour des raisons de sécurité, veuillez contacter le support pour supprimer définitivement votre compte atelier.");
-      }
+    final t = context.osho;
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Supprimer le compte ?'),
+        content: const Text(
+            "Cette action est irréversible. Toutes les données de l'atelier seront perdues."),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            style: TextButton.styleFrom(foregroundColor: t.ink),
+            child: const Text('Annuler'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              OLoaders.infoSnackBar(
+                title: 'Action requise',
+                message:
+                    'Pour des raisons de sécurité, contactez le support pour supprimer définitivement votre compte atelier.',
+              );
+            },
+            style: TextButton.styleFrom(foregroundColor: t.dangerInk),
+            child: const Text('Supprimer'),
+          ),
+        ],
+      ),
     );
   }
 }
