@@ -4,6 +4,7 @@ import 'package:osho/common/widgets/atelier/atelier.dart';
 import 'package:osho/features/personalization/screens/settings/setting.dart';
 import 'package:osho/features/shop/screens/home/home.dart';
 import 'package:osho/features/shop/screens/order/order.dart';
+import 'package:osho/features/tailor_dashboard/controllers/tailor_orders_controller.dart';
 
 class NavigationMenu extends StatelessWidget {
   const NavigationMenu({super.key, this.initialIndex = 0});
@@ -114,6 +115,18 @@ class _NavItem extends StatelessWidget {
 
 class NavigationController extends GetxController {
   final Rx<int> selectedIndex = 0.obs;
+
+  /// Ouvre l'onglet Commandes, éventuellement sur un statut précis
+  /// (depuis les chiffres clés de l'accueil, par exemple).
+  void openOrders([String? statusTab]) {
+    if (statusTab != null) {
+      final orders = Get.isRegistered<TailorOrdersController>()
+          ? Get.find<TailorOrdersController>()
+          : Get.put(TailorOrdersController());
+      orders.switchTab(statusTab);
+    }
+    selectedIndex.value = 1;
+  }
 
   final List<Widget> screens = [
     const HomeScreen(),

@@ -5,19 +5,26 @@ import 'package:osho/common/widgets/atelier/atelier.dart';
 import 'package:osho/common/widgets/atelier/status_tones.dart';
 import 'package:osho/common/widgets/loaders/loader.dart';
 import 'package:osho/features/shop/controllers/home_controller.dart';
-import 'package:osho/features/shop/models/order_model.dart';
-import 'package:osho/features/shop/screens/order/order.dart';
+import 'package:osho/features/tailor_dashboard/models/tailor_order.dart';
 import 'package:osho/features/tailor_dashboard/screens/tailor_order_detail_screen.dart';
 import 'package:osho/navigation_menu.dart';
+import 'package:osho/utils/theme/theme.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
+
+  static void _openOrders([String? tab]) {
+    if (Get.isRegistered<NavigationController>()) {
+      Get.find<NavigationController>().openOrders(tab);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final controller = Get.put(HomeController());
     final t = context.osho;
     final text = Theme.of(context).textTheme;
+    final today = DateFormat('EEEE d MMMM', 'fr_FR').format(DateTime.now());
 
     return Scaffold(
       body: SafeArea(
@@ -44,27 +51,52 @@ class HomeScreen extends StatelessWidget {
                 child: Text('Tableau de bord', style: text.headlineMedium),
               ),
               const SizedBox(height: 4),
-              Text('Gérez vos confections en temps réel',
+              Text(today[0].toUpperCase() + today.substring(1),
                   style: OType.text(OType.body, t.muted)),
               const SizedBox(height: 24),
+
+              /// Next step first: orders waiting for an answer
+              Obx(() {
+                final pending = controller.pendingCount.value;
+                if (pending == 0) return const SizedBox.shrink();
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 20),
+                  child: _PendingCallout(
+                    count: pending,
+                    onTap: () => _openOrders('pending'),
+                  ),
+                );
+              }),
+
               Obx(
                 () => _KeyFigures(figures: [
-                  (label: 'Nouvelles', value: controller.newOrdersCount.value),
-                  (label: 'En cours', value: controller.inProgressCount.value),
-                  (label: 'Terminées', value: controller.completedCount.value),
-                ]),
+                  (
+                    label: 'À traiter',
+                    value: controller.pendingCount.value,
+                    tab: 'pending'
+                  ),
+                  (
+                    label: 'Acceptées',
+                    value: controller.acceptedCount.value,
+                    tab: 'accepted'
+                  ),
+                  (
+                    label: 'En cours',
+                    value: controller.inProgressCount.value,
+                    tab: 'in_progress'
+                  ),
+                  (
+                    label: 'Terminées',
+                    value: controller.completedCount.value,
+                    tab: 'completed'
+                  ),
+                ], onOpen: _openOrders),
               ),
               const SizedBox(height: 32),
               OSectionLabel(
                 'Commandes récentes',
                 trailing: TextButton(
-                  onPressed: () {
-                    if (Get.isRegistered<NavigationController>()) {
-                      Get.find<NavigationController>().selectedIndex.value = 1;
-                      return;
-                    }
-                    Get.to(() => const OrderScreen());
-                  },
+                  onPressed: _openOrders,
                   child: const Text('Voir tout'),
                 ),
               ),
@@ -77,8 +109,19 @@ class HomeScreen extends StatelessWidget {
                     child: OLoader(size: 28),
                   );
                 }
+                if (controller.hasError.value &&
+                    controller.recentOrders.isEmpty) {
+                  return OEmptyState(
+                    'Impossible de charger vos commandes.',
+                    action: TextButton(
+                      onPressed: controller.fetchDashboardData,
+                      child: const Text('Réessayer'),
+                    ),
+                  );
+                }
                 if (controller.recentOrders.isEmpty) {
-                  return const OEmptyState('Aucune commande récente.');
+                  return const OEmptyState(
+                      'Aucune commande pour le moment.\nVous serez notifié dès qu’un client commande.');
                 }
                 return Column(
                   children: [
@@ -95,47 +138,120 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-/// Les chiffres clés : un chiffre, son libellé en petites capitales, un filet.
-class _KeyFigures extends StatelessWidget {
-  const _KeyFigures({required this.figures});
+/// Bandeau « à traiter » : la prochaine action du tailleur, en un toucher.
+class _PendingCallout extends StatelessWidget {
+  const _PendingCallout({required this.count, required this.onTap});
 
-  final List<({String label, int value})> figures;
+  final int count;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final t = context.osho;
-    return Container(
-      decoration: BoxDecoration(
-        border: Border.symmetric(horizontal: BorderSide(color: t.hairline)),
+    final label = count > 1
+        ? '$count commandes attendent votre réponse'
+        : '1 commande attend votre réponse';
+    return Semantics(
+      button: true,
+      label: label,
+      excludeSemantics: true,
+      child: Material(
+        color: t.warnBg,
+        shape: RoundedRectangleBorder(
+          side: BorderSide(color: t.warnBorder),
+          borderRadius: OshoTheme.borderRadius,
+        ),
+        child: InkWell(
+          onTap: onTap,
+          child: Container(
+            constraints: const BoxConstraints(minHeight: 56),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(label,
+                      style: OType.text(OType.body, t.warnInk,
+                          weight: FontWeight.w600)),
+                ),
+                const SizedBox(width: 8),
+                Text('Répondre',
+                    style: OType.text(OType.secondary, t.warnInk,
+                        weight: FontWeight.w500)),
+                const SizedBox(width: 4),
+                OIcon(OIcons.chevronRight, size: 18, color: t.warnInk),
+              ],
+            ),
+          ),
+        ),
       ),
-      child: IntrinsicHeight(
-        child: Row(
-          children: [
-            for (var i = 0; i < figures.length; i++) ...[
-              if (i > 0) VerticalDivider(width: 1, color: t.hairline),
-              Expanded(
-                child: MergeSemantics(
-                  child: Padding(
-                    padding: EdgeInsets.fromLTRB(i == 0 ? 0 : 14, 16, 8, 16),
+    );
+  }
+}
+
+/// Les chiffres clés, un par onglet de commandes : un chiffre, son libellé
+/// en petites capitales, des filets. Chacun ouvre l'onglet correspondant.
+class _KeyFigures extends StatelessWidget {
+  const _KeyFigures({required this.figures, required this.onOpen});
+
+  final List<({String label, int value, String tab})> figures;
+  final void Function(String tab) onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.osho;
+    Widget cell(int i) {
+      final f = figures[i];
+      return Expanded(
+        child: Semantics(
+          button: true,
+          label: '${f.label} : ${f.value}',
+          hint: 'Voir ces commandes',
+          excludeSemantics: true,
+          child: InkWell(
+            onTap: () => onOpen(f.tab),
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(i.isEven ? 0 : 14, 16, 4, 16),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('${figures[i].value}',
-                            style: OType.display(36, t.ink).copyWith(
+                        Text('${f.value}',
+                            style: OType.display(32, t.ink).copyWith(
                                 fontFeatures: const [
                                   FontFeature.tabularFigures()
                                 ])),
                         const SizedBox(height: 6),
-                        Text(figures[i].label.toUpperCase(),
+                        Text(f.label.toUpperCase(),
                             style: OType.smallCaps(t.muted)),
                       ],
                     ),
                   ),
-                ),
+                  OIcon(OIcons.chevronRight, size: 16, color: t.muted),
+                ],
               ),
-            ],
-          ],
+            ),
+          ),
         ),
+      );
+    }
+
+    Widget row(int a) => IntrinsicHeight(
+          child: Row(children: [
+            cell(a),
+            VerticalDivider(width: 1, color: t.hairline),
+            cell(a + 1),
+          ]),
+        );
+
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.symmetric(horizontal: BorderSide(color: t.hairline)),
+      ),
+      child: Column(
+        children: [row(0), const OHairline(), row(2)],
       ),
     );
   }
@@ -144,20 +260,22 @@ class _KeyFigures extends StatelessWidget {
 class _RecentOrderRow extends StatelessWidget {
   const _RecentOrderRow({required this.order});
 
-  final OrderModel order;
+  final TailorOrder order;
 
   @override
   Widget build(BuildContext context) {
     final t = context.osho;
-    final date = DateFormat('d MMM yyyy', 'fr_FR').format(order.createdAt);
-    final meta = [
-      if (order.customerName.trim().isNotEmpty) order.customerName.trim(),
-      date,
-    ].join(' · ');
+    final created = order.createdAt.toLocal();
+    // Year only when it is not the current one: keeps the row on one line.
+    final date = DateFormat(
+            created.year == DateTime.now().year ? 'd MMM' : 'd MMM yyyy',
+            'fr_FR')
+        .format(created);
 
     return MergeSemantics(
       child: InkWell(
-        onTap: () => Get.to(() => TailorOrderDetailScreen(orderId: order.id)),
+        onTap: () =>
+            Get.to(() => TailorOrderDetailScreen(orderId: order.orderId)),
         child: Container(
           constraints: const BoxConstraints(minHeight: 72),
           padding: const EdgeInsets.symmetric(vertical: 12),
@@ -172,13 +290,13 @@ class _RecentOrderRow extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(order.modelName,
+                    Text(order.clientName,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: OType.text(OType.body, t.ink,
                             weight: FontWeight.w500)),
                     const SizedBox(height: 2),
-                    Text(meta,
+                    Text('${order.modelName} · $date',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: OType.text(OType.secondary, t.muted)),
@@ -186,7 +304,7 @@ class _RecentOrderRow extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 12),
-              OStatusTag(order.status.label, order.status.tone),
+              OStatusTag(order.statusLabel, order.status.tone),
             ],
           ),
         ),

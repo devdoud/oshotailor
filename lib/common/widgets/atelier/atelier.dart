@@ -377,3 +377,45 @@ class OIconButton extends StatelessWidget {
     );
   }
 }
+
+/// Demande de confirmation avant une action irréversible ou engageante.
+/// Renvoie `true` seulement si l'utilisateur confirme.
+Future<bool> confirmAction(
+  BuildContext context, {
+  required String title,
+  required String message,
+  required String confirmLabel,
+  bool destructive = false,
+}) async {
+  final t = context.osho;
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text(title),
+      content: Text(message),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(ctx).pop(false),
+          style: TextButton.styleFrom(foregroundColor: t.ink),
+          child: const Text('Annuler'),
+        ),
+        TextButton(
+          onPressed: () => Navigator.of(ctx).pop(true),
+          style: TextButton.styleFrom(
+              foregroundColor: destructive ? t.dangerInk : t.accent),
+          child: Text(confirmLabel),
+        ),
+      ],
+    ),
+  );
+  return ok ?? false;
+}
+
+/// Refuser une commande est définitif : toujours confirmé.
+Future<bool> confirmReject(BuildContext context) => confirmAction(
+      context,
+      title: 'Refuser cette commande ?',
+      message: 'Vous ne pourrez plus l’accepter ensuite.',
+      confirmLabel: 'Refuser',
+      destructive: true,
+    );

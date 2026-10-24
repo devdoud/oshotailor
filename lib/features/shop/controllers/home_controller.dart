@@ -1,21 +1,21 @@
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:osho/data/services/tailor_orders_service.dart';
-import '../models/order_model.dart';
+import 'package:osho/features/tailor_dashboard/models/tailor_order.dart';
 
+/// Tableau de bord : mêmes données et mêmes statuts que l'onglet Commandes
+/// (affectations du tailleur), pour que les chiffres correspondent.
 class HomeController extends GetxController {
   static HomeController get instance => Get.find();
 
-  final _supabase = Supabase.instance.client;
-  
   // Observables
   final isLoading = false.obs;
+  final hasError = false.obs;
+  final pendingCount = 0.obs;
+  final acceptedCount = 0.obs;
   final inProgressCount = 0.obs;
   final completedCount = 0.obs;
-  final newOrdersCount = 0.obs;
-  final monthlyRevenue = 0.0.obs;
-  final recentOrders = <OrderModel>[].obs;
+  final recentOrders = <TailorOrder>[].obs;
 
   @override
   void onInit() {
@@ -26,39 +26,28 @@ class HomeController extends GetxController {
   Future<void> fetchDashboardData() async {
     try {
       isLoading.value = true;
-      final userId = _supabase.auth.currentUser?.id;
-      if (userId == null) return;
+      hasError.value = false;
 
-      // 1. Fetch Orders for Stats using the tailor orders edge function
       final response = await TailorOrdersService.getMyOrders();
+      final orders = response
+          .whereType<Map>()
+          .map((e) => TailorOrder.fromJson(Map<String, dynamic>.from(e)))
+          .toList();
 
-      final List<OrderModel> allOrders = (response as List).map((data) {
-        if (data is Map<String, dynamic>) {
-          final orderData = data['order'] ?? data;
-          if (orderData is Map<String, dynamic>) {
-            return OrderModel.fromJson(orderData);
-          }
-        }
-        return OrderModel.fromJson(Map<String, dynamic>.from(data as Map));
-      }).toList();
+      pendingCount.value =
+          orders.where((o) => o.status == TailorOrderStatus.pending).length;
+      acceptedCount.value =
+          orders.where((o) => o.status == TailorOrderStatus.accepted).length;
+      inProgressCount.value =
+          orders.where((o) => o.status == TailorOrderStatus.inProgress).length;
+      completedCount.value =
+          orders.where((o) => o.status == TailorOrderStatus.completed).length;
 
-      // 2. Calculate Stats
-      inProgressCount.value = allOrders.where((o) => o.status == OrderStatus.processing).length;
-      completedCount.value = allOrders.where((o) => o.status == OrderStatus.completed).length;
-      newOrdersCount.value = allOrders.where((o) => o.status == OrderStatus.newOrder).length;
-      
-      // Calculate Revenue (Example: Current Month)
-      final now = DateTime.now();
-      monthlyRevenue.value = allOrders
-          .where((o) => o.createdAt.month == now.month && o.createdAt.year == now.year)
-          .fold(0, (sum, item) => sum + item.amount);
-
-      // 3. Get Recent Orders (Top 5)
-      allOrders.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-      recentOrders.assignAll(allOrders.take(5).toList());
-
+      orders.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      recentOrders.assignAll(orders.take(5));
     } catch (e) {
-      debugPrint("Error fetching dashboard: $e");
+      hasError.value = true;
+      debugPrint('Error fetching dashboard: $e');
     } finally {
       isLoading.value = false;
     }

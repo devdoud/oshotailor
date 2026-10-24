@@ -55,8 +55,8 @@ class TailorDashboardScreen extends StatelessWidget {
                     child: c.orders.isEmpty
                         ? ListView(
                             physics: const AlwaysScrollableScrollPhysics(),
-                            children: const [
-                              OEmptyState('Aucune commande dans cet onglet.'),
+                            children: [
+                              OEmptyState(_emptyMessage(c.activeTab.value)),
                             ],
                           )
                         : ListView.builder(
@@ -79,6 +79,15 @@ class TailorDashboardScreen extends StatelessWidget {
     );
   }
 }
+
+String _emptyMessage(String tab) => switch (tab) {
+      'pending' =>
+        'Aucune nouvelle commande.\nVous serez notifié dès qu’un client commande.',
+      'accepted' => 'Aucune commande acceptée en attente de démarrage.',
+      'in_progress' => 'Aucune commande en confection.',
+      'completed' => 'Aucune commande terminée pour le moment.',
+      _ => 'Aucune commande.',
+    };
 
 /// Filtres par statut : l'onglet actif est souligné d'un trait d'encre.
 class _StatusTabs extends StatelessWidget {
@@ -207,22 +216,27 @@ class _OrderRow extends StatelessWidget {
           ),
           if (hasActions) ...[
             const SizedBox(height: 12),
-            _actions(),
+            _actions(context),
           ],
         ],
       ),
     );
   }
 
-  Widget _actions() {
+  Widget _actions(BuildContext context) {
     final busy = controller.isLoading.value;
     if (order.canAcceptOrReject) {
       return Row(
         children: [
           Expanded(
             child: OutlinedButton(
-              onPressed:
-                  busy ? null : () => controller.rejectOrder(order.assignmentId),
+              onPressed: busy
+                  ? null
+                  : () async {
+                      if (await confirmReject(context)) {
+                        controller.rejectOrder(order.assignmentId);
+                      }
+                    },
               style: OutlinedButton.styleFrom(minimumSize: const Size(48, 48)),
               child: const Text('Refuser'),
             ),

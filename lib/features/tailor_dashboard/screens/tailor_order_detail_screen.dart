@@ -129,11 +129,21 @@ class _TailorOrderDetailScreenState extends State<TailorOrderDetailScreen> {
       body: order == null
           ? (_isLoading
               ? const OLoader(size: 28)
-              : const Center(child: OEmptyState('Commande introuvable.')))
+              : Center(
+                  child: OEmptyState(
+                    'Impossible d’afficher cette commande.',
+                    action: TextButton(
+                      onPressed: _loadOrder,
+                      child: const Text('Réessayer'),
+                    ),
+                  ),
+                ))
           : RefreshIndicator(
               onRefresh: _loadOrder,
               child: ListView(
-                padding: const EdgeInsets.fromLTRB(kGutter, 20, kGutter, 32),
+                // Without an action bar, keep clear of the system nav bar.
+                padding: EdgeInsets.fromLTRB(kGutter, 20, kGutter,
+                    32 + MediaQuery.paddingOf(context).bottom),
                 children: [
                   _buildHeader(context, order),
                   if (order.notes.trim().isNotEmpty) ...[
@@ -202,11 +212,14 @@ class _TailorOrderDetailScreenState extends State<TailorOrderDetailScreen> {
         OutlinedButton(
           onPressed: _isSubmitting
               ? null
-              : () => _updateAssignment(
+              : () async {
+                  if (!await confirmReject(context)) return;
+                  await _updateAssignment(
                     action: () =>
                         AssignmentService.rejectOrder(order.assignmentId),
                     successMessage: 'Commande refusée.',
-                  ),
+                  );
+                },
           child: const Text('Refuser'),
         ),
         ElevatedButton(

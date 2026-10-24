@@ -4,6 +4,7 @@ import 'package:osho/common/widgets/loaders/loader.dart';
 import 'package:osho/data/services/assignment_service.dart';
 import 'package:osho/data/services/fcm_service.dart';
 import 'package:osho/data/services/tailor_orders_service.dart';
+import 'package:osho/features/shop/controllers/home_controller.dart';
 import 'package:osho/features/tailor_dashboard/models/tailor_order.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -71,6 +72,9 @@ class TailorOrdersController extends GetxController {
       final fetchedOrdersRaw =
           await TailorOrdersService.getMyOrders(status: statusToFetch);
 
+      // Tab changed while loading: drop this stale response.
+      if (statusToFetch != activeTab.value) return;
+
       orders.assignAll(fetchedOrdersRaw
           .map((e) => TailorOrder.fromJson(Map<String, dynamic>.from(e)))
           .toList());
@@ -98,8 +102,9 @@ class TailorOrdersController extends GetxController {
         message: 'Commande acceptée!',
       );
 
-      // Refresh the list
+      // Refresh the list and the dashboard figures
       await fetchOrders();
+      _refreshDashboard();
     } catch (e) {
       debugPrint('❌ Error accepting order: $e');
       OLoaders.errorSnackBar(
@@ -122,8 +127,9 @@ class TailorOrdersController extends GetxController {
         message: 'Commande commencée!',
       );
 
-      // Refresh the list
+      // Refresh the list and the dashboard figures
       await fetchOrders();
+      _refreshDashboard();
     } catch (e) {
       debugPrint('❌ Error starting order: $e');
       OLoaders.errorSnackBar(
@@ -146,8 +152,9 @@ class TailorOrdersController extends GetxController {
         message: 'Commande terminée!',
       );
 
-      // Refresh the list
+      // Refresh the list and the dashboard figures
       await fetchOrders();
+      _refreshDashboard();
     } catch (e) {
       debugPrint('❌ Error completing order: $e');
       OLoaders.errorSnackBar(
@@ -170,8 +177,9 @@ class TailorOrdersController extends GetxController {
         message: 'Commande rejetée',
       );
 
-      // Refresh the list
+      // Refresh the list and the dashboard figures
       await fetchOrders();
+      _refreshDashboard();
     } catch (e) {
       debugPrint('❌ Error rejecting order: $e');
       OLoaders.errorSnackBar(
@@ -183,9 +191,16 @@ class TailorOrdersController extends GetxController {
     }
   }
 
+  void _refreshDashboard() {
+    if (Get.isRegistered<HomeController>()) {
+      HomeController.instance.fetchDashboardData();
+    }
+  }
+
   /// Switch tab and fetch orders
   Future<void> switchTab(String tabName) async {
     if (statusTabs.contains(tabName)) {
+      if (tabName != activeTab.value) orders.clear();
       activeTab.value = tabName;
       await fetchOrders(status: tabName);
     }

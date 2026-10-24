@@ -21,10 +21,10 @@ class OText {
 
   // -- Login Texts
   static const String loginTitle = "Bienvenue sur Osho.";
-  static const String loginSubTitle = "Connectez-vous !";
+  static const String loginSubTitle = "Connectez-vous à votre atelier.";
   static const String email = "Email";
   static const String password = "Mot de passe";
-  static const String rememberMe = "Souvenez-vous";
+  static const String rememberMe = "Se souvenir de moi";
   static const String forgotPassword = "Mot de passe oublié ?";
   static const String signIn = "Connexion";
   static const String noCompte = "Vous n'avez pas de compte ?";
