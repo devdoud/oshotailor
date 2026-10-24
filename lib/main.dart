@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:get_storage/get_storage.dart';
-import 'package:osho/data/services/fcm_service.dart';
+import 'package:osho/data/services/notification_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:intl/date_symbol_data_local.dart';
@@ -14,11 +14,17 @@ import 'app.dart';
 import 'firebase_options.dart';
 import 'env.dart';
 
+/// Message reçu app fermée ou en arrière-plan. Un message avec un bloc
+/// `notification` est affiché par le système ; un message de données seul
+/// doit être affiché par l'app, sinon le tailleur ne voit rien.
+@pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  debugPrint('Handling a background message: ');
+  if (message.notification == null) {
+    await NotificationService.show(message);
+  }
 }
 
 Future<void> main() async {
@@ -45,11 +51,10 @@ Future<void> main() async {
     );
 
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-    await FCMService.requestPermissions();
-
-    debugPrint('Firebase initialized successfully');
+    // Permission et jeton : demandés après la connexion (registerDevice).
+    await NotificationService.initialize();
   } catch (e) {
-    debugPrint('Firebase initialization warning: ');
+    debugPrint('Firebase initialization failed: $e');
   }
 
   await Supabase.initialize(

@@ -4,7 +4,7 @@ import 'dart:async';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
-import 'package:osho/data/services/fcm_service.dart';
+import 'package:osho/data/services/notification_service.dart';
 import 'package:osho/features/authentication/screens/login/login.dart';
 import 'package:osho/features/authentication/screens/onboarding/onboarding.dart';
 import 'package:osho/navigation_menu.dart';
@@ -27,7 +27,9 @@ class AuthenticationRepository extends GetxController {
 
     if (session != null) {
       Get.offAll(() => const NavigationMenu());
-      unawaited(FCMService.registerTailorToken(session.user.id));
+      // Same path after login and on app start with a saved session.
+      unawaited(NotificationService.registerDevice());
+      unawaited(NotificationService.openLaunchOrder());
       return;
     }
 
@@ -64,9 +66,6 @@ class AuthenticationRepository extends GetxController {
         email: email,
         password: password,
       );
-      if (response.user != null) {
-        unawaited(FCMService.registerTailorToken(response.user!.id));
-      }
       return response;
     } on AuthException catch (e) {
       // Affichera précisément "Email not confirmed" ou "Invalid login credentials"
@@ -79,6 +78,8 @@ class AuthenticationRepository extends GetxController {
   Future<void> logout() async {
     try {
       debugPrint("DEBUG: Entame de la déconnexion Supabase...");
+      // While still signed in: stop sending this account's orders here.
+      await NotificationService.unregisterDevice();
       await _supabase.auth.signOut();
       debugPrint("DEBUG: Session Supabase détruite avec succès.");
     } catch (e) {

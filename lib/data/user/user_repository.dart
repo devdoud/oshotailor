@@ -1,5 +1,4 @@
 import 'package:flutter/foundation.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:osho/features/personalization/models/user_model.dart';
@@ -9,31 +8,6 @@ class UserRepository extends GetxController {
   static UserRepository get instance => Get.find();
 
   final _supabase = Supabase.instance.client;
-
-  /// Update FCM Token in Supabase
-  Future<void> saveDeviceToken() async {
-    try {
-      final user = _supabase.auth.currentUser;
-      if (user == null) return;
-
-      // 1. Request Permission (essential for iOS)
-      await FirebaseMessaging.instance.requestPermission();
-
-      // 2. Get unique device token
-      String? token = await FirebaseMessaging.instance.getToken();
-
-      if (token != null) {
-        // 3. Upsert into tailor_tokens table
-        await _supabase.from('tailor_tokens').upsert({
-          'tailor_id': user.id,
-          'fcm_token': token,
-        });
-        debugPrint("✅ FCM Token saved successfully");
-      }
-    } catch (e) {
-      debugPrint("❌ Error saving FCM token: $e");
-    }
-  }
 
   /// Function to save user record to Supabase "users" table.
   Future<void> saveUserRecord(UserModel user) async {

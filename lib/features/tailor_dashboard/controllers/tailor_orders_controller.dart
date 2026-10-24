@@ -2,11 +2,9 @@ import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:osho/common/widgets/loaders/loader.dart';
 import 'package:osho/data/services/assignment_service.dart';
-import 'package:osho/data/services/fcm_service.dart';
 import 'package:osho/data/services/tailor_orders_service.dart';
 import 'package:osho/features/shop/controllers/home_controller.dart';
 import 'package:osho/features/tailor_dashboard/models/tailor_order.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 class TailorOrdersController extends GetxController {
   static TailorOrdersController get instance => Get.find();
@@ -34,33 +32,9 @@ class TailorOrdersController extends GetxController {
 
   @override
   void onInit() {
-    _initializeFCM();
+    // Notifications are set up once, after login (NotificationService).
     fetchOrders();
     super.onInit();
-  }
-
-  /// Initialize FCM service
-  Future<void> _initializeFCM() async {
-    try {
-      final supabase = Supabase.instance.client;
-      final session = supabase.auth.currentSession;
-
-      if (session != null) {
-        final userId = session.user.id;
-
-        // Register tailor token
-        await FCMService.registerTailorToken(userId);
-        debugPrint('✅ FCM token registered');
-
-        // Listen to notifications
-        FCMService.listenToNotifications(() {
-          debugPrint('📬 Notification received, refreshing orders...');
-          fetchOrders();
-        });
-      }
-    } catch (e) {
-      debugPrint('⚠️ FCM initialization warning: $e');
-    }
   }
 
   /// Fetch orders based on active tab or specific status
